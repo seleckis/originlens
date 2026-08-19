@@ -18,7 +18,7 @@ a verified legitimate bank is release-blocking.
 These categories remain separately selectable as they are introduced. Normal CI
 never depends on live websites.
 
-## Stage 0 commands
+## Stage 2 commands
 
 ```bash
 pnpm lint
@@ -30,12 +30,13 @@ pnpm test:e2e
 ```
 
 The Playwright test launches bundled Chromium with only the production extension
-build enabled, observes the MV3 service worker, and checks the popup's honest
-capability state. It does not test phishing detection.
+build enabled, observes the MV3 service worker, and checks the declared content
+script boundary and the popup's honest capability state. It does not test
+phishing detection.
 
 ## Test-download artifact
 
-`pnpm package:test-download` creates `dist/originlens-stage-0.zip` and its
+`pnpm package:test-download` creates `dist/originlens-stage-2.zip` and its
 SHA-256 companion file from the production build. The ZIP contains the
 `chrome-mv3` directory required by Chrome's **Load unpacked** flow.
 
@@ -51,6 +52,11 @@ may target only a local server that discards request bodies without logging
 them. Tests never submit credentials to a live site, bypass CAPTCHA or access
 controls, or retain cookies, tokens, query parameters, screenshots, or personal
 information in diagnostics.
+
+`pnpm test:fixtures` starts a loopback-only fixture server at
+`http://127.0.0.1:4173/`. Its POST route consumes and discards request bodies
+without logging them. It is for manual and extension integration checks only; it
+is not a product backend.
 
 Live-bank tests will require `RUN_LIVE_BANK_TESTS=1`, conservative navigation,
 no form interaction, sanitized output, and documented skips when automation is

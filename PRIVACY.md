@@ -3,14 +3,17 @@
 OriginLens is designed for local-first phishing analysis with data minimization
 as an architectural constraint.
 
-## Stage 0 behavior
+## Current behavior (Stage 2)
 
 The Stage 0 shell:
 
 - displays the active page's origin after the user opens the popup;
-- has no content script, host permissions, storage, telemetry, or analytics;
+- uses an isolated-world content script on HTTP(S) pages to count bounded form
+  structure; it has HTTP(S) host access for that purpose;
 - configures no application network endpoint;
-- performs no page or phishing analysis.
+- has no storage, telemetry, or analytics;
+- does not read field values, page text, DOM HTML, or browsing history;
+- has no phishing verdict or blocking behavior.
 
 ## Enduring commitments
 

@@ -1,20 +1,17 @@
 # Architecture
 
-## Stage 0 topology
+## Stage 2 topology
 
 OriginLens is a Chrome Manifest V3 extension built with WXT and React.
 
 ```text
-active browser tab
-      │ activeTab: URL exposed only after user opens action
-      ▼
-popup ───────────────► options page
-  │
-  └──────────────────► diagnostics page
+page DOM (untrusted) ──► isolated-world content script ── bounded aggregate ──► MV3 service worker
+       ▲                              │                                      │
+       │                              └── no field values / input listeners   ├── popup
+       │                                                                       └── diagnostics
+active browser tab ── activeTab URL ─► popup
 
-MV3 service worker: packaged and inert in Stage 0
 network/backend: none
-content scripts: none
 storage: none
 ```
 
@@ -24,10 +21,10 @@ pages are reported as restricted rather than interpreted as websites.
 
 ## Planned trust boundaries
 
-Later page analysis will run in an isolated-world content script. Page input is
-untrusted even across the isolated-world boundary because the page controls the
-shared DOM. Only bounded, validated structural messages may cross into the
-service worker. Raw field values are outside the permitted data model.
+Page analysis runs in an isolated-world content script. Page input is untrusted
+even across the isolated-world boundary because the page controls the shared
+DOM. Only bounded, validated structural aggregates cross into the service
+worker. Raw field values are outside the permitted data model.
 
 The service worker will coordinate deterministic analyzers and UI state. It is
 event-driven and must not assume in-memory state survives suspension. No backend
