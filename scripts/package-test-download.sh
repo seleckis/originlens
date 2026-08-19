@@ -4,7 +4,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 artifact_dir="$repo_root/dist"
-artifact_path="$artifact_dir/originlens-stage-0.zip"
+artifact_path="$artifact_dir/originlens-stage-2.zip"
 checksum_path="$artifact_path.sha256"
 
 cd "$repo_root"
