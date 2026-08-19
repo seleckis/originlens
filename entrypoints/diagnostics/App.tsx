@@ -1,3 +1,9 @@
+import { useEffect, useState } from "react";
+
+import { getCurrentStructuralSummary } from "../../lib/current-origin";
+import type { StructuralSummary } from "../../lib/dom-analysis";
+import { analyzeUrl } from "../../lib/url-analysis";
+
 const checks = [
   {
     label: "Manifest",
@@ -5,9 +11,9 @@ const checks = [
     detail: "Event-driven extension service worker"
   },
   {
-    label: "Required permission",
-    value: "activeTab only",
-    detail: "Temporary current-tab access after opening OriginLens"
+    label: "Required permissions",
+    value: "activeTab and webNavigation",
+    detail: "Current-tab access and bounded top-level redirect origins"
   },
   {
     label: "Network",
@@ -21,8 +27,8 @@ const checks = [
   },
   {
     label: "Page analysis",
-    value: "Not implemented",
-    detail: "No page content or form data is inspected in Stage 0"
+    value: "Structural only",
+    detail: "Field values are never read, stored, or sent"
   }
 ] as const;
 
@@ -34,6 +40,12 @@ const urlFixtures = [
 ] as const;
 
 export default function App() {
+  const [summary, setSummary] = useState<StructuralSummary>();
+  useEffect(() => {
+    void getCurrentStructuralSummary()
+      .then(setSummary)
+      .catch(() => undefined);
+  }, []);
   return (
     <main className="diagnostics shell">
       <header className="brand">
@@ -47,15 +59,13 @@ export default function App() {
           </p>
         </div>
       </header>
-
       <section className="diagnostics-card card" aria-labelledby="build-facts">
         <p className="eyebrow">Local extension state</p>
-        <h2 id="build-facts">Stage 0 build facts</h2>
+        <h2 id="build-facts">Stage 2 build facts</h2>
         <p className="muted">
           These are extension configuration facts, not a verdict about any
           website.
         </p>
-
         <ul>
           {checks.map((check) => (
             <li key={check.label}>
@@ -71,7 +81,57 @@ export default function App() {
           ))}
         </ul>
       </section>
-
+      <section className="diagnostics-card card" aria-labelledby="structure">
+        <p className="eyebrow">Current tab</p>
+        <h2 id="structure">Structural analysis</h2>
+        <p className="muted">
+          Counts are derived from element types, attributes, relationships, and
+          visibility. Field values and page text are not included.
+        </p>
+        {summary ? (
+          <ul>
+            <li>
+              <span className="check-mark" aria-hidden="true">
+                ·
+              </span>
+              <div>
+                <span className="check-label">Sensitive structure</span>
+                <strong>
+                  Password {summary.passwordFields}; username{" "}
+                  {summary.usernameFields}; OTP {summary.otpFields}; card{" "}
+                  {summary.cardFields}; seed/key {summary.seedOrKeyFields}
+                </strong>
+                <small>
+                  Recovery fields {summary.recoveryForms}; login controls{" "}
+                  {summary.loginButtons}
+                </small>
+              </div>
+            </li>
+            <li>
+              <span className="check-mark" aria-hidden="true">
+                ·
+              </span>
+              <div>
+                <span className="check-label">Form context</span>
+                <strong>
+                  Cross-origin actions {summary.crossOriginFormActions}; hidden
+                  credential forms {summary.hiddenCredentialForms}
+                </strong>
+                <small>
+                  Nested frame {summary.nestedFrame ? "yes" : "no"}; scanned
+                  fields {summary.scannedNodes}
+                  {summary.truncated ? "+ (bounded)" : ""}
+                </small>
+              </div>
+            </li>
+          </ul>
+        ) : (
+          <p className="muted">
+            No eligible page summary is available. Chrome pages and pages opened
+            before this build was installed remain unknown.
+          </p>
+        )}
+      </section>
       <section className="diagnostics-card card" aria-labelledby="url-fixtures">
         <p className="eyebrow">Local browser fixtures</p>
         <h2 id="url-fixtures">Synthetic URL analysis</h2>
@@ -100,4 +160,3 @@ export default function App() {
     </main>
   );
 }
-import { analyzeUrl } from "../../lib/url-analysis";
