@@ -51,6 +51,29 @@ body {
   line-height: 1.55;
 }
 
+.evidence {
+  margin-top: 22px;
+}
+.evidence ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.evidence li {
+  display: grid;
+  gap: 5px;
+  padding: 10px 0;
+  border-top: 1px solid rgb(24 63 53 / 10%);
+  color: #63706a;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.evidence code {
+  color: #31584b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .disclaimer {
   margin-top: 28px;
   padding-top: 18px;

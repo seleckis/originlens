@@ -28,7 +28,7 @@ test("loads the MV3 shell without remote requests or security claims", async () 
     chrome.runtime.getManifest()
   );
   expect(manifest.manifest_version).toBe(3);
-  expect(manifest.permissions).toEqual(["activeTab"]);
+  expect(manifest.permissions).toEqual(["activeTab", "webNavigation"]);
   expect(manifest.host_permissions).toBeUndefined();
 
   const extensionId = new URL(serviceWorker.url()).host;
@@ -42,9 +42,7 @@ test("loads the MV3 shell without remote requests or security claims", async () 
 
   await expect(page.getByRole("heading", { name: "OriginLens" })).toBeVisible();
   await expect(page.getByText("See who a site really is.")).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Analysis not implemented yet" })
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Unknown" })).toBeVisible();
   await expect(
     page.getByText(/cannot prove that a website is safe/i)
   ).toBeVisible();

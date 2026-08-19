@@ -8,12 +8,18 @@ importers:
 
   .:
     dependencies:
+      punycode:
+        specifier: 2.3.1
+        version: 2.3.1
       react:
         specifier: 19.2.8
         version: 19.2.8
       react-dom:
         specifier: 19.2.8
         version: 19.2.8(react@19.2.8)
+      tldts:
+        specifier: 7.4.10
+        version: 7.4.10
     devDependencies:
       '@eslint/js':
         specifier: 10.0.1
@@ -33,6 +39,9 @@ importers:
       '@types/node':
         specifier: 22.20.1
         version: 22.20.1
+      '@types/punycode':
+        specifier: 2.1.4
+        version: 2.1.4
       '@types/react':
         specifier: 19.2.18
         version: 19.2.18
@@ -414,6 +423,9 @@ packages:
 
   '@types/node@22.20.1':
     resolution: {integrity: sha512-EANqOCF9QFyra+4pfxUcX9STKJpCLjMbObVzljIJomAWSnuSIEAvyzEU53GaajbXJEgdh0iEcPL+DGvpUd4k1Q==}
+
+  '@types/punycode@2.1.4':
+    resolution: {integrity: sha512-trzh6NzBnq8yw5e35f8xe8VTYjqM3NE7bohBtvDVf/dtUer3zYTLK1Ka3DG3p7bdtoaOHZucma6FfVKlQ134pQ==}
 
   '@types/react-dom@19.2.4':
     resolution: {integrity: sha512-Bsc+QHgp+P/F02XDzNCY9jnZNCUuLki36KT7VKrTXXLdHf+vHMNZnW1rVu5DNW/rCK+fya3DATySbLM4yhtKUw==}
@@ -1893,6 +1905,8 @@ snapshots:
   '@types/node@22.20.1':
     dependencies:
       undici-types: 6.21.0
+
+  '@types/punycode@2.1.4': {}
 
   '@types/react-dom@19.2.4(@types/react@19.2.18)':
     dependencies:
