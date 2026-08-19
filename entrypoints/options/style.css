@@ -1,0 +1,42 @@
+.settings {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding-top: 52px;
+}
+
+.settings-card {
+  margin-top: 34px;
+  padding: 30px;
+}
+
+.settings-card h2 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: -0.025em;
+}
+
+.settings-card > p.muted {
+  max-width: 590px;
+  line-height: 1.65;
+}
+
+.settings-card dl {
+  margin: 28px 0;
+}
+
+.settings-card dl div {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 18px;
+  padding: 15px 0;
+  border-top: 1px solid rgb(24 63 53 / 10%);
+}
+
+.settings-card dt {
+  font-weight: 720;
+}
+
+.settings-card dd {
+  margin: 0;
+  color: #63706a;
+}
