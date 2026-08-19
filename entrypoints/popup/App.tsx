@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 
 import {
   getCurrentOrigin,
+  getCurrentStructuralSummary,
   getCurrentUrlAnalysis
 } from "../../lib/current-origin";
+import type { StructuralSummary } from "../../lib/dom-analysis";
 import type { DisplayOrigin } from "../../lib/origin";
 import type { UrlAnalysis } from "../../lib/url-analysis";
 
@@ -16,10 +18,14 @@ const initialAnalysis: UrlAnalysis = { state: "unknown", evidence: [] };
 export default function App() {
   const [origin, setOrigin] = useState(initialOrigin);
   const [analysis, setAnalysis] = useState(initialAnalysis);
+  const [summary, setSummary] = useState<StructuralSummary>();
 
   useEffect(() => {
     void getCurrentOrigin().then(setOrigin);
     void getCurrentUrlAnalysis().then(setAnalysis);
+    void getCurrentStructuralSummary()
+      .then(setSummary)
+      .catch(() => undefined);
   }, []);
 
   const openDiagnostics = async () => {
@@ -80,6 +86,29 @@ export default function App() {
                 <span>{item.detail}</span>
               </li>
             ))}
+          </ul>
+        </section>
+      )}
+
+      {summary && (
+        <section className="evidence" aria-label="Page structure">
+          <p className="eyebrow">Page structure</p>
+          <ul>
+            <li>
+              <code>STRUCTURAL.SENSITIVE_FIELDS</code>
+              <span>
+                Password: {summary.passwordFields}; OTP: {summary.otpFields};
+                card: {summary.cardFields}; seed/key: {summary.seedOrKeyFields}
+              </span>
+            </li>
+            <li>
+              <code>STRUCTURAL.FORM_CONTEXT</code>
+              <span>
+                Cross-origin actions: {summary.crossOriginFormActions}; hidden
+                credential forms: {summary.hiddenCredentialForms}; nested frame:{" "}
+                {summary.nestedFrame ? "yes" : "no"}
+              </span>
+            </li>
           </ul>
         </section>
       )}
