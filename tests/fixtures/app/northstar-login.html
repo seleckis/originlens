@@ -6,16 +6,13 @@
   </head>
   <body>
     <h1>Northstar Bank — synthetic fixture</h1>
-    <p>
-      Use fake text only. This local server discards POST bodies without logging
-      them.
-    </p>
-    <form action="/discard" method="post">
+    <p>Use fake text only. This fixture never submits form data.</p>
+    <form>
       <label>Email <input type="email" autocomplete="username" /></label
       ><label
         >Password
         <input type="password" autocomplete="current-password" /></label
-      ><button type="submit" name="sign-in">Sign in</button>
+      ><button type="button" name="sign-in">Sign in</button>
     </form>
   </body>
 </html>

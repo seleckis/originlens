@@ -29,8 +29,14 @@ export default function App() {
   }, []);
 
   const openDiagnostics = async () => {
+    const [tab] = await browser.tabs.query({
+      active: true,
+      currentWindow: true
+    });
+    const parameters = new URLSearchParams();
+    if (typeof tab?.id === "number") parameters.set("tabId", String(tab.id));
     await browser.tabs.create({
-      url: browser.runtime.getURL("/diagnostics.html")
+      url: browser.runtime.getURL(`/diagnostics.html?${parameters.toString()}`)
     });
   };
 

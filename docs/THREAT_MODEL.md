@@ -37,11 +37,11 @@ are outside the extension's enforcement boundary.
 ## Stage 2 attack surface
 
 Stage 2 injects a bundled isolated-world script into HTTP(S) pages. The script
-considers the DOM hostile, inspects only bounded form structure, and sends a
-validated aggregate to the service worker. It never reads field values and has
-no input, keyboard, clipboard, or page-message bridge. A page cannot directly
-call extension messaging; the worker additionally accepts structural summaries
-only when Chrome identifies the sender as OriginLens's own content script.
+considers the DOM hostile and exposes a schema-validated structural response
+only over Chrome's private extension tab-message channel. It never reads field
+values and has no input, keyboard, clipboard, or page-message bridge. A page
+cannot call the extension channel because OriginLens exposes no external
+messaging endpoint.
 
 Closed shadow roots and inaccessible frames are not evidence of benignness. They
 remain unobserved and must become `unknown` in later policy stages.

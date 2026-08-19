@@ -1,6 +1,6 @@
 import { toDisplayOrigin, type DisplayOrigin } from "./origin";
 import { analyzeUrl, type UrlAnalysis } from "./url-analysis";
-import type { StructuralSummary } from "./dom-analysis";
+import { isStructuralSummary, type StructuralSummary } from "./dom-analysis";
 
 export async function getCurrentOrigin(): Promise<DisplayOrigin> {
   try {
@@ -30,9 +30,23 @@ export async function getCurrentStructuralSummary(): Promise<
   StructuralSummary | undefined
 > {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-  if (typeof tab?.id !== "number") return undefined;
-  return browser.runtime.sendMessage({
-    type: "originlens.get-structural-summary",
-    tabId: tab.id
-  });
+  return getStructuralSummaryForTab(tab?.id);
+}
+
+export async function getStructuralSummaryForTab(
+  tabId: number | undefined
+): Promise<StructuralSummary | undefined> {
+  if (typeof tabId !== "number") return undefined;
+  try {
+    await browser.scripting.executeScript({
+      files: ["/content-scripts/content.js"],
+      target: { tabId }
+    });
+    const summary: unknown = await browser.tabs.sendMessage(tabId, {
+      type: "originlens.inspect-structure"
+    });
+    return isStructuralSummary(summary) ? summary : undefined;
+  } catch {
+    return undefined;
+  }
 }
