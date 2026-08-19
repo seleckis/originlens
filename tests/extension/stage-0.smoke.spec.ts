@@ -20,7 +20,7 @@ test.afterAll(async () => {
   await context.close();
 });
 
-test("loads the MV3 shell without remote requests or security claims", async () => {
+test("loads Stage 2 locally without remote requests or security claims", async () => {
   let [serviceWorker] = context.serviceWorkers();
   serviceWorker ??= await context.waitForEvent("serviceworker");
 
@@ -29,7 +29,11 @@ test("loads the MV3 shell without remote requests or security claims", async () 
   );
   expect(manifest.manifest_version).toBe(3);
   expect(manifest.permissions).toEqual(["activeTab", "webNavigation"]);
-  expect(manifest.host_permissions).toBeUndefined();
+  expect(manifest.host_permissions).toEqual(["http://*/*", "https://*/*"]);
+  expect(manifest.content_scripts?.[0]?.matches).toEqual([
+    "http://*/*",
+    "https://*/*"
+  ]);
 
   const extensionId = new URL(serviceWorker.url()).host;
   const page = await context.newPage();
@@ -55,4 +59,5 @@ test("loads the MV3 shell without remote requests or security claims", async () 
   ).toBeVisible();
   await expect(page.getByText("No endpoints configured")).toBeVisible();
   await expect(page.getByText("Disabled")).toBeVisible();
+  await expect(page.getByText("Structural only")).toBeVisible();
 });
