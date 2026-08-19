@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Dynamic login fixture</title>
+  </head>
+  <body>
+    <h1>Dynamic login fixture</h1>
+    <button id="reveal">Show sign in</button>
+    <div id="target"></div>
+    <script>
+      document.querySelector("#reveal").addEventListener("click", () => {
+        document.querySelector("#target").innerHTML =
+          '<form action="/discard" method="post"><label>Email <input type="email" autocomplete="username"></label><label>Password <input type="password"></label><button type="submit" name="sign-in">Sign in</button></form>';
+      });
+    </script>
+  </body>
+</html>

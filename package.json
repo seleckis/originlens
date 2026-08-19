@@ -21,6 +21,7 @@
     "postinstall": "wxt prepare",
     "test": "vitest run",
     "test:e2e": "pnpm build && playwright test",
+    "test:fixtures": "node scripts/serve-fixtures.mjs",
     "test:watch": "vitest",
     "typecheck": "wxt prepare && tsc --noEmit"
   },
