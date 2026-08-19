@@ -6,18 +6,22 @@ OriginLens is an open-source, privacy-first Chrome extension being built to
 detect phishing from identity claims, sensitive-data intent, verified domain
 relationships, and page behavior—not malicious-URL blocklists.
 
-## Current status: Stage 0 shell
+## Current status: Stage 2 structural analysis
 
-The current build is a loadable Manifest V3 extension shell. It provides:
+The current build is a loadable Manifest V3 extension with early local signals.
+It provides:
 
 - a popup showing the active page origin;
 - an options page;
 - a local diagnostics view;
-- an event-driven service worker with no listeners;
-- no page analysis, warnings, telemetry, analytics, or network endpoints.
+- deterministic URL/origin evidence such as unusual ports, user-info confusion,
+  IDN visibility, mixed scripts, and confusables;
+- bounded, local structural counts for sensitive form intent and form context;
+- an event-driven service worker, no telemetry, analytics, or network endpoints.
 
-OriginLens does **not** detect phishing yet. See [ROADMAP.md](ROADMAP.md) for
-planned work; roadmap items are not implemented features.
+OriginLens does **not** identify claimed organizations, verify domains, issue
+phishing warnings, or block entry yet. See [ROADMAP.md](ROADMAP.md) for planned
+work; roadmap items are not implemented features.
 
 > **Important:** OriginLens cannot prove that a website is safe. It does not
 > replace Chrome's built-in protections or phishing-resistant authentication
@@ -25,9 +29,10 @@ planned work; roadmap items are not implemented features.
 
 ## Privacy baseline
 
-Stage 0 has no content script, required host permissions, storage, analytics, or
-application network calls. The popup requests `activeTab` only, allowing it to
-display the active page's origin after the user opens the extension.
+Stage 2 has a bundled isolated-world content script on HTTP(S) pages. It counts
+bounded field and form structure but never accesses field values or registers
+input/keylogging handlers. It has no storage, analytics, or application network
+calls.
 
 Future stages must never read, retain, log, hash, or transmit values entered in
 password, OTP, payment-card, recovery, seed-phrase, private-key, or other
@@ -55,14 +60,14 @@ Load `.output/chrome-mv3` as an unpacked extension in Chrome.
 
 ### Test-download deployment
 
-For the self-hosted Stage 0 test artifact, run:
+For the self-hosted test artifact, run:
 
 ```bash
 pnpm deploy:test-download
 ```
 
 This creates an integrity-checkable ZIP and serves it only at
-`https://fixtures.example.invalid/originlens-stage-0.zip`. Chrome does not install
+`https://fixtures.example.invalid/originlens-stage-2.zip`. Chrome does not install
 self-hosted extension ZIPs directly: extract the archive, then select its
 `chrome-mv3` directory with **Load unpacked** in `chrome://extensions`.
 
@@ -78,6 +83,12 @@ pnpm typecheck
 pnpm test
 pnpm build
 pnpm test:e2e
+```
+
+Run only the local browser fixtures with:
+
+```bash
+pnpm test:fixtures
 ```
 
 The Playwright smoke test requires its bundled Chromium:

@@ -1,7 +1,7 @@
 # Chrome MV3 baseline
 
-- Reviewed: 2026-08-18
-- Scope: Stage 0 architecture; future content-script boundary
+- Reviewed: 2026-08-19
+- Scope: Stages 0–2 architecture and content-script boundary
 
 ## Primary sources
 
@@ -24,8 +24,15 @@
   use narrow schemas and page-controlled strings must remain untrusted.
 - Host patterns and API permissions increase impact and may trigger user
   warnings. Chrome recommends optional or `activeTab` access when it meets the
-  feature need. Stage 0 therefore uses only `activeTab` and has no content
-  script or host permission.
+  feature need. Stage 0 therefore used only `activeTab`.
+- Stage 2 needs static isolated-world content scripts to observe bounded DOM
+  structure after page load and mutations. It therefore declares the two web
+  host patterns (`http://*/*`, `https://*/*`). The script sends only a
+  schema-validated aggregate to the extension service worker; it does not use a
+  page `postMessage` bridge, access field values, or install input/key handlers.
+- A closed shadow root and frames which Chrome cannot inject into are not
+  treated as benign. They are outside the observed structure and remain unknown
+  to later policy stages.
 - WXT generates the manifest from configuration and entrypoints. Chrome is MV3
   by default, but OriginLens uses explicit `--mv3` scripts and tests the emitted
   manifest to prevent accidental target drift.

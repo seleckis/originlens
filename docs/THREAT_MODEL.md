@@ -34,9 +34,14 @@ inaccessible frames. Unknown visibility must remain unknown, not benign.
 Compromised browsers, operating systems, and extension signing infrastructure
 are outside the extension's enforcement boundary.
 
-## Stage 0 attack surface
+## Stage 2 attack surface
 
-Stage 0 has no page injection, network endpoint, storage, or analysis. Its
-primary input is the active tab URL exposed by Chrome after the action gesture;
-the popup parses it with the platform `URL` implementation and displays only its
-origin. The empty service worker has no message handlers.
+Stage 2 injects a bundled isolated-world script into HTTP(S) pages. The script
+considers the DOM hostile, inspects only bounded form structure, and sends a
+validated aggregate to the service worker. It never reads field values and has
+no input, keyboard, clipboard, or page-message bridge. A page cannot directly
+call extension messaging; the worker additionally accepts structural summaries
+only when Chrome identifies the sender as OriginLens's own content script.
+
+Closed shadow roots and inaccessible frames are not evidence of benignness. They
+remain unobserved and must become `unknown` in later policy stages.

@@ -7,8 +7,8 @@ pushed, and tagged.
 | Stage | Scope                                                           | Status        |
 | ----- | --------------------------------------------------------------- | ------------- |
 | 0     | Repository, architecture, documentation, CI, loadable MV3 shell | Complete      |
-| 1     | Deterministic URL and origin analysis                           | In progress   |
-| 2     | Privacy-bounded sensitive-intent and DOM analysis               | Planned       |
+| 1     | Deterministic URL and origin analysis                           | Complete      |
+| 2     | Privacy-bounded sensitive-intent and DOM analysis               | In progress   |
 | 3     | Claimed identity and provenance-backed Latvian bank registry    | Planned       |
 | 4     | Explicit decision policy and accessible intervention            | Planned       |
 | 5     | Bounded behavioral and network-context signals                  | Planned       |
