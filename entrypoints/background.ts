@@ -22,12 +22,7 @@ export default defineBackground(() => {
     summaries.delete(tabId);
   });
   browser.runtime.onMessage.addListener((message: unknown, sender) => {
-    if (
-      sender.id !== browser.runtime.id ||
-      !message ||
-      typeof message !== "object"
-    )
-      return undefined;
+    if (!message || typeof message !== "object") return undefined;
     const payload = message as {
       tabId?: unknown;
       type?: unknown;
@@ -40,7 +35,7 @@ export default defineBackground(() => {
     }
     if (
       payload.type !== "originlens.structural-summary" ||
-      !sender.tab?.id ||
+      typeof sender.tab?.id !== "number" ||
       !isStructuralSummary(payload.summary)
     )
       return undefined;

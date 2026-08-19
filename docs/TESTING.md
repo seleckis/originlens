@@ -58,6 +58,11 @@ information in diagnostics.
 without logging them. It is for manual and extension integration checks only; it
 is not a product backend.
 
+`pnpm deploy:test-download` also publishes the same fixtures at
+`https://originlens.seleckis.lv/fixtures/` for remote-browser manual checks.
+Those fixtures use no form submission and Nginx accepts only GET and HEAD on
+that path.
+
 Live-bank tests will require `RUN_LIVE_BANK_TESTS=1`, conservative navigation,
 no form interaction, sanitized output, and documented skips when automation is
 blocked. ML evaluation, if justified, must use temporal and site-family

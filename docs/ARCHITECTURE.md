@@ -11,6 +11,10 @@ page DOM (untrusted) ──► isolated-world content script ── bounded aggr
        │                                                                       └── diagnostics
 active browser tab ── activeTab URL ─► popup
 
+Diagnostics uses the bundled `scripting` API path for the inspected tab before
+requesting a current structural aggregate. This covers tabs already open when
+the extension was installed; only the packaged content-script file is used.
+
 network/backend: none
 storage: none
 ```

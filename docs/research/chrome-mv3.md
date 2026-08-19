@@ -30,6 +30,9 @@
   host patterns (`http://*/*`, `https://*/*`). The script sends only a
   schema-validated aggregate to the extension service worker; it does not use a
   page `postMessage` bridge, access field values, or install input/key handlers.
+- The `scripting` permission permits Diagnostics to inject the same packaged
+  content script after a page was already loaded. This avoids treating a tab
+  opened before installation as analyzed and does not permit remote code.
 - A closed shadow root and frames which Chrome cannot inject into are not
   treated as benign. They are outside the observed structure and remain unknown
   to later policy stages.

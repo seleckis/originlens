@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { getCurrentStructuralSummary } from "../../lib/current-origin";
+import { getStructuralSummaryForTab } from "../../lib/current-origin";
 import type { StructuralSummary } from "../../lib/dom-analysis";
 import { analyzeUrl } from "../../lib/url-analysis";
 
@@ -12,8 +12,8 @@ const checks = [
   },
   {
     label: "Required permissions",
-    value: "activeTab and webNavigation",
-    detail: "Current-tab access and bounded top-level redirect origins"
+    value: "activeTab, scripting, and webNavigation",
+    detail: "Current-tab analysis, packaged injection, and bounded redirects"
   },
   {
     label: "Network",
@@ -42,7 +42,8 @@ const urlFixtures = [
 export default function App() {
   const [summary, setSummary] = useState<StructuralSummary>();
   useEffect(() => {
-    void getCurrentStructuralSummary()
+    const tabId = Number(new URLSearchParams(location.search).get("tabId"));
+    void getStructuralSummaryForTab(Number.isInteger(tabId) ? tabId : undefined)
       .then(setSummary)
       .catch(() => undefined);
   }, []);
