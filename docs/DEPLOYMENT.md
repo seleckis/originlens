@@ -1,0 +1,44 @@
+# Test-download deployment
+
+Stage 0 has a deliberately narrow self-hosted test distribution. It serves a
+single ZIP artifact and its SHA-256 checksum; the directory does not list files
+or host extension source pages.
+
+## Deploy
+
+From the repository root on the Nginx host:
+
+```bash
+pnpm deploy:test-download
+```
+
+The command:
+
+1. builds the Chrome Manifest V3 production output;
+2. packages `.output/chrome-mv3` as `dist/originlens-stage-0.zip`;
+3. creates `dist/originlens-stage-0.zip.sha256`;
+4. installs both artifacts under `/var/www/originlens/releases`;
+5. installs and enables the Nginx vhost from
+   `deploy/nginx/fixtures.example.invalid.conf`;
+6. validates the complete Nginx configuration before reloading it.
+
+It requires local `sudo` for the system paths and reload. A failed `nginx -t`
+prevents the reload.
+
+## Download and load
+
+- ZIP: `https://fixtures.example.invalid/originlens-stage-0.zip`
+- Checksum: `https://fixtures.example.invalid/originlens-stage-0.zip.sha256`
+
+Verify the SHA-256 file, extract the ZIP, open `chrome://extensions`, enable
+Developer mode, choose **Load unpacked**, and select the extracted `chrome-mv3`
+directory. Chrome intentionally does not install a self-hosted ZIP as an
+extension directly.
+
+## Operational notes
+
+The hostname resolves within the current Tailscale environment. The installed
+configuration uses the existing shared `example.invalid` TLS snippet, redirects HTTP
+to HTTPS, sends `Content-Disposition: attachment`, disables caching, and returns
+404 outside the two artifact paths. Certificate coverage and Nginx reload are
+checked by the deployment command on the privileged host.
