@@ -26,6 +26,13 @@ const checks = [
   }
 ] as const;
 
+const urlFixtures = [
+  "https://www.example.co.uk/news",
+  "https://mañana.com/",
+  "https://bank@example.test:8443/",
+  "https://pаypal.example.test/"
+] as const;
+
 export default function App() {
   return (
     <main className="diagnostics shell">
@@ -64,6 +71,33 @@ export default function App() {
           ))}
         </ul>
       </section>
+
+      <section className="diagnostics-card card" aria-labelledby="url-fixtures">
+        <p className="eyebrow">Local browser fixtures</p>
+        <h2 id="url-fixtures">Synthetic URL analysis</h2>
+        <p className="muted">
+          These fixed examples are evaluated locally; no URL is opened or
+          transmitted.
+        </p>
+        <ul>
+          {urlFixtures.map((url) => {
+            const result = analyzeUrl(url);
+            return (
+              <li key={url}>
+                <div>
+                  <span className="check-label">{url}</span>
+                  <strong>{result.state}</strong>
+                  <small>
+                    {result.evidence.map((item) => item.code).join(", ") ||
+                      "No weak URL signals"}
+                  </small>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
     </main>
   );
 }
+import { analyzeUrl } from "../../lib/url-analysis";

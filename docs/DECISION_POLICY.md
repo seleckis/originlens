@@ -2,8 +2,10 @@
 
 ## Current behavior
 
-Stage 0 produces no security verdict. “Analysis not implemented yet” is a
-capability statement, not `unknown` and not a claim that the page is safe.
+Stage 1 produces a local URL-only state: weak deterministic URL signals may
+produce `caution`; unavailable or restricted URLs produce `unknown`; otherwise
+the state is `no strong phishing indicators detected`. These are not identity
+verification or a safety claim.
 
 ## Required future states
 

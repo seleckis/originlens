@@ -1,18 +1,25 @@
 import { useEffect, useState } from "react";
 
-import { getCurrentOrigin } from "../../lib/current-origin";
+import {
+  getCurrentOrigin,
+  getCurrentUrlAnalysis
+} from "../../lib/current-origin";
 import type { DisplayOrigin } from "../../lib/origin";
+import type { UrlAnalysis } from "../../lib/url-analysis";
 
 const initialOrigin: DisplayOrigin = {
   kind: "unavailable",
   label: "Checking current origin…"
 };
+const initialAnalysis: UrlAnalysis = { state: "unknown", evidence: [] };
 
 export default function App() {
   const [origin, setOrigin] = useState(initialOrigin);
+  const [analysis, setAnalysis] = useState(initialAnalysis);
 
   useEffect(() => {
     void getCurrentOrigin().then(setOrigin);
+    void getCurrentUrlAnalysis().then(setAnalysis);
   }, []);
 
   const openDiagnostics = async () => {
@@ -49,12 +56,33 @@ export default function App() {
       <section className="status-card" aria-labelledby="status-heading">
         <span className="status-dot" aria-hidden="true" />
         <div>
-          <h2 id="status-heading">Analysis not implemented yet</h2>
+          <h2 id="status-heading">
+            {analysis.state === "caution"
+              ? "Caution"
+              : analysis.state === "unknown"
+                ? "Unknown"
+                : "No strong phishing indicators detected"}
+          </h2>
           <p>
-            This Stage 0 shell does not evaluate or make claims about this site.
+            URL-only analysis is local and deterministic. It cannot verify who a
+            site is.
           </p>
         </div>
       </section>
+
+      {analysis.evidence.length > 0 && (
+        <section className="evidence" aria-label="URL evidence">
+          <p className="eyebrow">URL evidence</p>
+          <ul>
+            {analysis.evidence.map((item) => (
+              <li key={item.code}>
+                <code>{item.code}</code>
+                <span>{item.detail}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <p className="disclaimer">
         OriginLens cannot prove that a website is safe. Keep Chrome’s built-in

@@ -5,7 +5,7 @@ export default defineConfig({
   manifest: {
     name: "OriginLens",
     description: "See who a site really is. Privacy-first phishing detection.",
-    permissions: ["activeTab"],
+    permissions: ["activeTab", "webNavigation"],
     action: {
       default_title: "OriginLens — inspect this site"
     }
