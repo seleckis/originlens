@@ -8,6 +8,9 @@ These rules apply to the entire repository.
 - At every stage end, run lint, formatting checks, strict type checking, unit
   and integration tests, relevant Playwright tests, and a production build.
 - Provide exact Chrome acceptance steps and wait for the user's confirmation.
+  Use `https://fixtures.example.invalid/fixtures/` as the canonical manual
+  acceptance fixture index. Do not present a localhost URL as the default;
+  `pnpm test:fixtures` is only an optional developer fallback.
 - Only after confirmation: commit, push the checkpoint and its `stage-N` tag,
   then begin the next stage. Never publish to the Chrome Web Store without
   explicit approval.

@@ -1,48 +1,81 @@
-import { analyzeDocument } from "../lib/dom-analysis";
+import { analyzeDocument, STRUCTURAL_NODE_LIMIT } from "../lib/dom-analysis";
 
 export default defineContentScript({
   matches: ["http://*/*", "https://*/*"],
+  allFrames: true,
+  matchAboutBlank: true,
+  matchOriginAsFallback: true,
   noScriptStartedPostMessage: true,
   runAt: "document_idle",
-  main() {
+  main(ctx) {
     let timer: number | undefined;
-    const report = () => {
-      void browser.runtime.sendMessage({
-        type: "originlens.structural-summary",
-        summary: analyzeDocument(document)
+    let spaNavigationsObserved = 0;
+
+    const currentSummary = () =>
+      analyzeDocument(document, {
+        nestedFrame: window.top !== window,
+        spaNavigationsObserved
       });
+    const report = async () => {
+      if (ctx.isInvalid) return;
+      try {
+        await browser.runtime.sendMessage({
+          type: "originlens.structural-summary",
+          summary: currentSummary()
+        });
+      } catch {
+        /* The extension may be reloaded while this isolated context is active. */
+      }
     };
     const schedule = () => {
-      if (timer) window.clearTimeout(timer);
-      timer = window.setTimeout(report, 250);
+      if (timer !== undefined) window.clearTimeout(timer);
+      timer = ctx.setTimeout(() => void report(), 250);
     };
-    browser.runtime.onMessage.addListener(
-      (message: unknown, _sender, respond) => {
-        if (
-          !message ||
-          typeof message !== "object" ||
-          (message as { type?: unknown }).type !==
-            "originlens.inspect-structure"
-        )
-          return undefined;
-        respond(analyzeDocument(document));
-        return true;
-      }
-    );
-    report();
-    new MutationObserver(schedule).observe(document.documentElement, {
+    const onMessage = (
+      message: unknown,
+      _sender: Browser.runtime.MessageSender,
+      respond: (response?: unknown) => void
+    ) => {
+      if (
+        !message ||
+        typeof message !== "object" ||
+        (message as { type?: unknown }).type !== "originlens.inspect-structure"
+      )
+        return undefined;
+      respond(currentSummary());
+      return true;
+    };
+
+    browser.runtime.onMessage.addListener(onMessage);
+    const observer = new MutationObserver(schedule);
+    observer.observe(document.documentElement, {
       childList: true,
       subtree: true,
       attributes: true,
       attributeFilter: [
         "action",
+        "aria-hidden",
         "autocomplete",
-        "type",
+        "class",
         "hidden",
+        "role",
+        "src",
         "style",
-        "class"
+        "type"
       ]
     });
-    window.addEventListener("popstate", schedule);
+    ctx.addEventListener(window, "wxt:locationchange", () => {
+      spaNavigationsObserved = Math.min(
+        STRUCTURAL_NODE_LIMIT,
+        spaNavigationsObserved + 1
+      );
+      schedule();
+    });
+    ctx.onInvalidated(() => {
+      observer.disconnect();
+      browser.runtime.onMessage.removeListener(onMessage);
+      if (timer !== undefined) window.clearTimeout(timer);
+    });
+    void report();
   }
 });

@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Nested frame fixture</title>
+  </head>
+  <body>
+    <h1>Nested frame fixture</h1>
+    <iframe src="frame-child.html" title="Credential frame"></iframe>
+    <iframe
+      srcdoc="<form><label>Code <input autocomplete='one-time-code'></label></form>"
+      title="Related OTP frame"
+    ></iframe>
+  </body>
+</html>

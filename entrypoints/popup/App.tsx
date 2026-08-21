@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 
 import {
+  getCurrentNavigationSummary,
   getCurrentOrigin,
   getCurrentStructuralSummary,
   getCurrentUrlAnalysis
 } from "../../lib/current-origin";
 import type { StructuralSummary } from "../../lib/dom-analysis";
+import type { NavigationSummary } from "../../lib/navigation-analysis";
 import type { DisplayOrigin } from "../../lib/origin";
 import type { UrlAnalysis } from "../../lib/url-analysis";
 
@@ -19,10 +21,12 @@ export default function App() {
   const [origin, setOrigin] = useState(initialOrigin);
   const [analysis, setAnalysis] = useState(initialAnalysis);
   const [summary, setSummary] = useState<StructuralSummary>();
+  const [navigation, setNavigation] = useState<NavigationSummary>();
 
   useEffect(() => {
     void getCurrentOrigin().then(setOrigin);
     void getCurrentUrlAnalysis().then(setAnalysis);
+    void getCurrentNavigationSummary().then(setNavigation);
     void getCurrentStructuralSummary()
       .then(setSummary)
       .catch(() => undefined);
@@ -96,6 +100,24 @@ export default function App() {
         </section>
       )}
 
+      {navigation && navigation.evidence.length > 0 && (
+        <section className="evidence" aria-label="Navigation evidence">
+          <p className="eyebrow">Current navigation</p>
+          <ul>
+            {navigation.evidence.map((code) => (
+              <li key={code}>
+                <code>{code}</code>
+                <span>
+                  {navigation.origins.length} bounded origin
+                  {navigation.origins.length === 1 ? "" : "s"} observed; paths
+                  and queries were discarded.
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {summary && (
         <section className="evidence" aria-label="Page structure">
           <p className="eyebrow">Page structure</p>
@@ -111,8 +133,16 @@ export default function App() {
               <code>STRUCTURAL.FORM_CONTEXT</code>
               <span>
                 Cross-origin actions: {summary.crossOriginFormActions}; hidden
-                credential forms: {summary.hiddenCredentialForms}; nested frame:{" "}
-                {summary.nestedFrame ? "yes" : "no"}
+                credential forms: {summary.hiddenCredentialForms}; overlay
+                credential forms: {summary.overlayCredentialForms}
+              </span>
+            </li>
+            <li>
+              <code>STRUCTURAL.COVERAGE</code>
+              <span>
+                {summary.coverage}; analyzed frames: {summary.analyzedFrames};
+                unavailable frames: {summary.unavailableFrames}; nested frames:{" "}
+                {summary.nestedFrames}
               </span>
             </li>
           </ul>

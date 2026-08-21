@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 
-import { getStructuralSummaryForTab } from "../../lib/current-origin";
+import {
+  getNavigationSummaryForTab,
+  getStructuralSummaryForTab
+} from "../../lib/current-origin";
 import type { StructuralSummary } from "../../lib/dom-analysis";
+import type { NavigationSummary } from "../../lib/navigation-analysis";
 import { analyzeUrl } from "../../lib/url-analysis";
 
 const checks = [
@@ -41,10 +45,15 @@ const urlFixtures = [
 
 export default function App() {
   const [summary, setSummary] = useState<StructuralSummary>();
+  const [navigation, setNavigation] = useState<NavigationSummary>();
   useEffect(() => {
     const tabId = Number(new URLSearchParams(location.search).get("tabId"));
-    void getStructuralSummaryForTab(Number.isInteger(tabId) ? tabId : undefined)
+    const inspectedTabId = Number.isInteger(tabId) ? tabId : undefined;
+    void getStructuralSummaryForTab(inspectedTabId)
       .then(setSummary)
+      .catch(() => undefined);
+    void getNavigationSummaryForTab(inspectedTabId)
+      .then(setNavigation)
       .catch(() => undefined);
   }, []);
   return (
@@ -116,12 +125,30 @@ export default function App() {
                 <span className="check-label">Form context</span>
                 <strong>
                   Cross-origin actions {summary.crossOriginFormActions}; hidden
-                  credential forms {summary.hiddenCredentialForms}
+                  credential forms {summary.hiddenCredentialForms}; overlay
+                  credential forms {summary.overlayCredentialForms}
                 </strong>
                 <small>
-                  Nested frame {summary.nestedFrame ? "yes" : "no"}; scanned
-                  fields {summary.scannedNodes}
+                  Invalid actions {summary.invalidFormActions}; scanned fields{" "}
+                  {summary.scannedNodes}
                   {summary.truncated ? "+ (bounded)" : ""}
+                </small>
+              </div>
+            </li>
+            <li>
+              <span className="check-mark" aria-hidden="true">
+                ·
+              </span>
+              <div>
+                <span className="check-label">Analysis coverage</span>
+                <strong>
+                  {summary.coverage}; frames {summary.analyzedFrames} analyzed,{" "}
+                  {summary.unavailableFrames} unavailable
+                </strong>
+                <small>
+                  Nested frames {summary.nestedFrames}; SPA navigations observed{" "}
+                  {summary.spaNavigationsObserved}; visibility evidence{" "}
+                  {summary.evidence.join(", ")}
                 </small>
               </div>
             </li>
@@ -131,6 +158,33 @@ export default function App() {
             No eligible page summary is available. Chrome pages and pages opened
             before this build was installed remain unknown.
           </p>
+        )}
+      </section>
+      <section className="diagnostics-card card" aria-labelledby="navigation">
+        <p className="eyebrow">Current tab</p>
+        <h2 id="navigation">Navigation origins</h2>
+        <p className="muted">
+          Only origins from the current top-level navigation are retained in
+          transient memory. Paths and queries are discarded.
+        </p>
+        {navigation ? (
+          <ul>
+            <li>
+              <span className="check-mark" aria-hidden="true">
+                ·
+              </span>
+              <div>
+                <span className="check-label">Bounded navigation</span>
+                <strong>{navigation.origins.join(" → ")}</strong>
+                <small>
+                  {navigation.evidence.join(", ") ||
+                    "No redirect-origin change observed"}
+                </small>
+              </div>
+            </li>
+          </ul>
+        ) : (
+          <p className="muted">Current-navigation evidence is unavailable.</p>
         )}
       </section>
       <section className="diagnostics-card card" aria-labelledby="url-fixtures">

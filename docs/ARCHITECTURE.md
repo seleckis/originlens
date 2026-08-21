@@ -5,18 +5,27 @@
 OriginLens is a Chrome Manifest V3 extension built with WXT and React.
 
 ```text
-page DOM (untrusted) ──► isolated-world content script ── bounded aggregate ──► MV3 service worker
-       ▲                              │                                      │
-       │                              └── no field values / input listeners   ├── popup
-       │                                                                       └── diagnostics
+page/frame DOM (untrusted) ──► isolated-world content scripts ── bounded per-frame aggregate
+       ▲                                      │                                      │
+       │                                      └── no field values / input listeners  ▼
+active browser tab ◄──────────────────────── frame-aware on-demand collector ──► popup/diagnostics
+                                                                                       │
+webNavigation ── current navigation origins only ──► MV3 service worker ────────────────┘
 active browser tab ── activeTab URL ─► popup
 
-Diagnostics uses the bundled `scripting` API path for the inspected tab before
-requesting a current structural aggregate. This covers tabs already open when
-the extension was installed; only the packaged content-script file is used.
+Popup and Diagnostics first request current summaries from eligible frames. If a
+tab or frame predates installation, the collector injects the same bundled file
+into only that frame and retries. At most 32 frame summaries are aggregated.
+Unavailable or excess frames and bounded-scan limits produce explicit partial
+coverage evidence. Closed shadow roots remain explicitly unobservable.
+
+The service worker stores per-frame summaries transiently so mutation and SPA
+updates remain inspectable. It also retains at most eight origins from only the
+current top-level navigation. A new navigation clears the prior state; URL paths
+and queries are never stored.
 
 network/backend: none
-storage: none
+persistent storage: none
 ```
 
 The popup reduces the tab URL to `URL.origin` before display. Paths, query
