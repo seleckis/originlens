@@ -40,4 +40,27 @@
   by default, but OriginLens uses explicit `--mv3` scripts and tests the emitted
   manifest to prevent accidental target drift.
 
+## Stage 2 corrective review — 2026-08-21
+
+Primary sources rechecked:
+
+- [Chrome content scripts](https://developer.chrome.com/docs/extensions/develop/concepts/content-scripts)
+- [Chrome content-script manifest reference](https://developer.chrome.com/docs/extensions/reference/manifest/content-scripts)
+- [Chrome webNavigation API](https://developer.chrome.com/docs/extensions/reference/api/webNavigation)
+- [WXT content scripts](https://wxt.dev/guide/essentials/content-scripts)
+- [WXT ContentScriptContext](https://wxt.dev/api/reference/wxt/utils/content-script-context/classes/contentscriptcontext)
+
+The corrective implementation enables `all_frames`, `match_about_blank`, and
+origin fallback so eligible related frames are analyzed in isolated worlds.
+Chrome checks each frame independently, so missing access must remain explicit
+rather than being interpreted as zero sensitive structure. WXT's context owns
+timers and SPA location listeners; native observers and runtime listeners are
+removed through `onInvalidated` so fallback reinjection does not accumulate old
+analyzers.
+
+`webNavigation` may emit repeated provisional events before the final commit and
+marks client/server redirects on the committed transition. OriginLens therefore
+keeps a bounded state only for the current top-level navigation, resets it when
+a new navigation begins, and never stores paths or queries.
+
 These sources support platform behavior, not phishing-detection accuracy.

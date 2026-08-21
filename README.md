@@ -16,7 +16,10 @@ It provides:
 - a local diagnostics view;
 - deterministic URL/origin evidence such as unusual ports, user-info confusion,
   IDN visibility, mixed scripts, and confusables;
-- bounded, local structural counts for sensitive form intent and form context;
+- bounded, local structural counts for sensitive form intent, form context,
+  overlays, eligible nested frames, DOM mutations, and SPA navigation;
+- explicit partial-coverage evidence for unavailable frames, traversal limits,
+  and unobservable closed shadow roots;
 - an event-driven service worker, no telemetry, analytics, or network endpoints.
 
 OriginLens does **not** identify claimed organizations, verify domains, issue
@@ -29,10 +32,12 @@ work; roadmap items are not implemented features.
 
 ## Privacy baseline
 
-Stage 2 has a bundled isolated-world content script on HTTP(S) pages. It counts
-bounded field and form structure but never accesses field values or registers
-input/keylogging handlers. It has no storage, analytics, or application network
-calls.
+Stage 2 has a bundled isolated-world content script on HTTP(S) pages and
+eligible child frames. It counts bounded field and form structure but never
+accesses field values or registers input/keylogging handlers. It has no
+persistent storage, analytics, or application network calls. Current-navigation
+evidence retains at most eight origins in transient service-worker memory and
+discards paths and queries.
 
 Future stages must never read, retain, log, hash, or transmit values entered in
 password, OTP, payment-card, recovery, seed-phrase, private-key, or other
@@ -57,6 +62,16 @@ pnpm build
 ```
 
 Load `.output/chrome-mv3` as an unpacked extension in Chrome.
+
+### Manual Chrome acceptance
+
+Use the canonical hosted fixture index:
+
+`https://originlens.seleckis.lv/fixtures/`
+
+Stage acceptance instructions should link to that address directly. The hosted
+fixtures use fictional data, do not submit forms, and require no local fixture
+server.
 
 ### Test-download deployment
 
@@ -85,11 +100,14 @@ pnpm build
 pnpm test:e2e
 ```
 
-Run only the local browser fixtures with:
+For local fixture development only, run:
 
 ```bash
 pnpm test:fixtures
 ```
+
+This optional fallback serves the same files at `http://127.0.0.1:4173/`; it is
+not the canonical manual acceptance address.
 
 The Playwright smoke test requires its bundled Chromium:
 

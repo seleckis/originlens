@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SPA navigation fixture</title>
+  </head>
+  <body>
+    <h1>SPA navigation fixture</h1>
+    <button id="navigate">Change route without a reload</button>
+    <script>
+      document.querySelector("#navigate").addEventListener("click", () => {
+        history.pushState({}, "", "?route=account");
+      });
+    </script>
+  </body>
+</html>

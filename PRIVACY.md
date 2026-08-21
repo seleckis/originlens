@@ -5,14 +5,17 @@ as an architectural constraint.
 
 ## Current behavior (Stage 2)
 
-The Stage 0 shell:
+The Stage 2 build:
 
 - displays the active page's origin after the user opens the popup;
-- uses an isolated-world content script on HTTP(S) pages to count bounded form
-  structure; it has HTTP(S) host access for that purpose;
+- uses isolated-world content scripts on HTTP(S) pages and eligible child frames
+  to count bounded form structure; it has HTTP(S) host access for that purpose;
 - configures no application network endpoint;
 - has no storage, telemetry, or analytics;
-- does not read field values, page text, DOM HTML, or browsing history;
+- does not read field values, page text, or DOM HTML;
+- retains at most eight origins for only the current top-level navigation in
+  transient service-worker memory; paths, queries, and prior navigations are
+  discarded;
 - has no phishing verdict or blocking behavior.
 
 ## Enduring commitments

@@ -18,6 +18,10 @@ const server = createServer((request, response) => {
     return;
   }
   const pathname = new URL(request.url ?? "/", "http://fixture.local").pathname;
+  if (pathname === "/redirect") {
+    response.writeHead(302, { Location: "/benign-search.html" }).end();
+    return;
+  }
   const file = resolve(
     root,
     `.${normalize(pathname === "/" ? "/index.html" : pathname)}`

@@ -1,6 +1,16 @@
+import {
+  combineFrameStructuralSummaries,
+  isFrameStructuralSummary,
+  STRUCTURAL_FRAME_LIMIT,
+  type FrameStructuralSummary,
+  type StructuralSummary
+} from "./dom-analysis";
+import {
+  isNavigationSummary,
+  type NavigationSummary
+} from "./navigation-analysis";
 import { toDisplayOrigin, type DisplayOrigin } from "./origin";
 import { analyzeUrl, type UrlAnalysis } from "./url-analysis";
-import { isStructuralSummary, type StructuralSummary } from "./dom-analysis";
 
 export async function getCurrentOrigin(): Promise<DisplayOrigin> {
   try {
@@ -29,23 +39,104 @@ export async function getCurrentUrlAnalysis(): Promise<UrlAnalysis> {
 export async function getCurrentStructuralSummary(): Promise<
   StructuralSummary | undefined
 > {
-  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-  return getStructuralSummaryForTab(tab?.id);
+  try {
+    const [tab] = await browser.tabs.query({
+      active: true,
+      currentWindow: true
+    });
+    return getStructuralSummaryForTab(tab?.id);
+  } catch {
+    return undefined;
+  }
+}
+
+async function inspectFrame(
+  tabId: number,
+  frameId: number
+): Promise<FrameStructuralSummary | undefined> {
+  const request = async () => {
+    const response: unknown = await browser.tabs.sendMessage(
+      tabId,
+      { type: "originlens.inspect-structure" },
+      { frameId }
+    );
+    return isFrameStructuralSummary(response) ? response : undefined;
+  };
+
+  try {
+    const existing = await request();
+    if (existing) return existing;
+  } catch {
+    /* Tabs opened before installation need the packaged fallback injection. */
+  }
+
+  try {
+    await browser.scripting.executeScript({
+      files: ["/content-scripts/content.js"],
+      target: { tabId, frameIds: [frameId] }
+    });
+    return await request();
+  } catch {
+    return undefined;
+  }
 }
 
 export async function getStructuralSummaryForTab(
   tabId: number | undefined
 ): Promise<StructuralSummary | undefined> {
   if (typeof tabId !== "number") return undefined;
+
+  let frameIds = [0];
+  let enumerationUnavailable = false;
   try {
-    await browser.scripting.executeScript({
-      files: ["/content-scripts/content.js"],
-      target: { tabId }
+    const frames = await browser.webNavigation.getAllFrames({ tabId });
+    if (!frames) return undefined;
+    const topFrame = frames.find((frame) => frame.frameId === 0);
+    if (!topFrame || !/^https?:/.test(topFrame.url)) return undefined;
+    frameIds = [...new Set(frames.map((frame) => frame.frameId))];
+  } catch {
+    enumerationUnavailable = true;
+  }
+
+  const frameLimitReached = frameIds.length > STRUCTURAL_FRAME_LIMIT;
+  const selectedFrameIds = frameIds.slice(0, STRUCTURAL_FRAME_LIMIT);
+  const inspected = await Promise.all(
+    selectedFrameIds.map((frameId) => inspectFrame(tabId, frameId))
+  );
+  const summaries = inspected.filter(
+    (summary): summary is FrameStructuralSummary => summary !== undefined
+  );
+  return combineFrameStructuralSummaries(summaries, {
+    enumerationUnavailable,
+    frameLimitReached,
+    unavailableFrames: frameIds.length - summaries.length
+  });
+}
+
+export async function getNavigationSummaryForTab(
+  tabId: number | undefined
+): Promise<NavigationSummary | undefined> {
+  if (typeof tabId !== "number") return undefined;
+  try {
+    const summary: unknown = await browser.runtime.sendMessage({
+      type: "originlens.get-navigation-summary",
+      tabId
     });
-    const summary: unknown = await browser.tabs.sendMessage(tabId, {
-      type: "originlens.inspect-structure"
+    return isNavigationSummary(summary) ? summary : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function getCurrentNavigationSummary(): Promise<
+  NavigationSummary | undefined
+> {
+  try {
+    const [tab] = await browser.tabs.query({
+      active: true,
+      currentWindow: true
     });
-    return isStructuralSummary(summary) ? summary : undefined;
+    return getNavigationSummaryForTab(tab?.id);
   } catch {
     return undefined;
   }
