@@ -1,10 +1,18 @@
 import { useEffect, useState } from "react";
 
 import {
+  getIdentityAssessmentForTab,
   getNavigationSummaryForTab,
   getStructuralSummaryForTab
 } from "../../lib/current-origin";
+import type { IdentityAssessment } from "../../lib/claimed-identity";
 import type { StructuralSummary } from "../../lib/dom-analysis";
+import {
+  identityComparisonText,
+  identityContextText,
+  identityOrganization,
+  identitySourceText
+} from "../../lib/identity-explanations";
 import type { NavigationSummary } from "../../lib/navigation-analysis";
 import { analyzeUrl } from "../../lib/url-analysis";
 
@@ -31,8 +39,8 @@ const checks = [
   },
   {
     label: "Page analysis",
-    value: "Structural only",
-    detail: "Field values are never read, stored, or sent"
+    value: "Bounded structure and identity",
+    detail: "Field values and raw page text never cross the content boundary"
   }
 ] as const;
 
@@ -46,6 +54,7 @@ const urlFixtures = [
 export default function App() {
   const [summary, setSummary] = useState<StructuralSummary>();
   const [navigation, setNavigation] = useState<NavigationSummary>();
+  const [identity, setIdentity] = useState<IdentityAssessment>();
   useEffect(() => {
     const tabId = Number(new URLSearchParams(location.search).get("tabId"));
     const inspectedTabId = Number.isInteger(tabId) ? tabId : undefined;
@@ -54,6 +63,9 @@ export default function App() {
       .catch(() => undefined);
     void getNavigationSummaryForTab(inspectedTabId)
       .then(setNavigation)
+      .catch(() => undefined);
+    void getIdentityAssessmentForTab(inspectedTabId)
+      .then(setIdentity)
       .catch(() => undefined);
   }, []);
   return (
@@ -71,7 +83,7 @@ export default function App() {
       </header>
       <section className="diagnostics-card card" aria-labelledby="build-facts">
         <p className="eyebrow">Local extension state</p>
-        <h2 id="build-facts">Stage 2 build facts</h2>
+        <h2 id="build-facts">Stage 3 build facts</h2>
         <p className="muted">
           These are extension configuration facts, not a verdict about any
           website.
@@ -90,6 +102,66 @@ export default function App() {
             </li>
           ))}
         </ul>
+      </section>
+      <section className="diagnostics-card card" aria-labelledby="identity">
+        <p className="eyebrow">Current tab</p>
+        <h2 id="identity">Claimed identity</h2>
+        <p className="muted">
+          Known organizations are extracted locally from bounded, high-salience
+          sources. Raw page text and field values are not returned.
+        </p>
+        {identity ? (
+          <ul>
+            {identity.summary.candidates.length > 0 ? (
+              identity.summary.candidates.map((candidate) => (
+                <li key={candidate.identityId}>
+                  <span className="check-mark" aria-hidden="true">
+                    ·
+                  </span>
+                  <div>
+                    <span className="check-label">
+                      {identityOrganization(candidate)}
+                    </span>
+                    <strong>{candidate.confidence} identity claim</strong>
+                    <small>
+                      Sources: {identitySourceText(candidate)}
+                      {candidate.contexts.length > 0
+                        ? `; context: ${identityContextText(candidate)}`
+                        : ""}
+                    </small>
+                  </div>
+                </li>
+              ))
+            ) : (
+              <li>
+                <span className="check-mark" aria-hidden="true">
+                  ·
+                </span>
+                <div>
+                  <span className="check-label">Registry claim</span>
+                  <strong>None detected</strong>
+                  <small>
+                    No provenance-backed organization claim was found.
+                  </small>
+                </div>
+              </li>
+            )}
+            <li>
+              <span className="check-mark" aria-hidden="true">
+                ·
+              </span>
+              <div>
+                <span className="check-label">Domain relationship</span>
+                <strong>{identity.domainStatus}</strong>
+                <small>{identityComparisonText(identity)}</small>
+              </div>
+            </li>
+          </ul>
+        ) : (
+          <p className="muted">
+            Claimed-identity evidence is unavailable for this page.
+          </p>
+        )}
       </section>
       <section className="diagnostics-card card" aria-labelledby="structure">
         <p className="eyebrow">Current tab</p>

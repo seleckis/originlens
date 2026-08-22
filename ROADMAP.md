@@ -8,8 +8,8 @@ pushed, and tagged.
 | ----- | --------------------------------------------------------------- | ------------- |
 | 0     | Repository, architecture, documentation, CI, loadable MV3 shell | Complete      |
 | 1     | Deterministic URL and origin analysis                           | Complete      |
-| 2     | Privacy-bounded sensitive-intent and DOM analysis               | In progress   |
-| 3     | Claimed identity and provenance-backed Latvian bank registry    | Planned       |
+| 2     | Privacy-bounded sensitive-intent and DOM analysis               | Complete      |
+| 3     | Claimed identity and provenance-backed Latvian bank registry    | Complete      |
 | 4     | Explicit decision policy and accessible intervention            | Planned       |
 | 5     | Bounded behavioral and network-context signals                  | Planned       |
 | 6     | Optional self-hostable positive identity resolver               | Planned       |

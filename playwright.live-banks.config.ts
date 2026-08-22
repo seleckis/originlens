@@ -1,0 +1,15 @@
+import { defineConfig } from "@playwright/test";
+
+export default defineConfig({
+  testDir: "./tests/live-banks",
+  fullyParallel: false,
+  workers: 1,
+  retries: 0,
+  reporter: "list",
+  timeout: 45_000,
+  use: {
+    trace: "off",
+    screenshot: "off",
+    video: "off"
+  }
+});

@@ -1,6 +1,6 @@
 # Test-download and fixture deployment
 
-Stage 2 has a deliberately narrow self-hosted test distribution. It serves the
+Stage 3 has a deliberately narrow self-hosted test distribution. It serves the
 extension ZIP, its SHA-256 checksum, and a separate static fixture site for
 manual Chrome acceptance. It does not list directories or host extension source
 pages.
@@ -16,8 +16,8 @@ pnpm deploy:test-download
 The command:
 
 1. builds the Chrome Manifest V3 production output;
-2. packages `.output/chrome-mv3` as `dist/originlens-stage-2.zip`;
-3. creates `dist/originlens-stage-2.zip.sha256`;
+2. packages `.output/chrome-mv3` as `dist/originlens-stage-3.zip`;
+3. creates `dist/originlens-stage-3.zip.sha256`;
 4. installs both artifacts under `/var/www/originlens/releases`;
 5. installs `tests/fixtures/app` under `/var/www/originlens/fixtures`;
 6. installs and enables the Nginx vhost from
@@ -29,8 +29,8 @@ prevents the reload.
 
 ## Download and load
 
-- ZIP: `https://originlens.seleckis.lv/originlens-stage-2.zip`
-- Checksum: `https://originlens.seleckis.lv/originlens-stage-2.zip.sha256`
+- ZIP: `https://originlens.seleckis.lv/originlens-stage-3.zip`
+- Checksum: `https://originlens.seleckis.lv/originlens-stage-3.zip.sha256`
 - Manual acceptance fixtures: `https://originlens.seleckis.lv/fixtures/`
 
 Verify the SHA-256 file, extract the ZIP, open `chrome://extensions`, enable

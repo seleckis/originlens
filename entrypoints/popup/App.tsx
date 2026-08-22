@@ -1,12 +1,20 @@
 import { useEffect, useState } from "react";
 
 import {
+  getCurrentIdentityAssessment,
   getCurrentNavigationSummary,
   getCurrentOrigin,
   getCurrentStructuralSummary,
   getCurrentUrlAnalysis
 } from "../../lib/current-origin";
+import type { IdentityAssessment } from "../../lib/claimed-identity";
 import type { StructuralSummary } from "../../lib/dom-analysis";
+import {
+  identityComparisonText,
+  identityContextText,
+  identityOrganization,
+  identitySourceText
+} from "../../lib/identity-explanations";
 import type { NavigationSummary } from "../../lib/navigation-analysis";
 import type { DisplayOrigin } from "../../lib/origin";
 import type { UrlAnalysis } from "../../lib/url-analysis";
@@ -22,11 +30,15 @@ export default function App() {
   const [analysis, setAnalysis] = useState(initialAnalysis);
   const [summary, setSummary] = useState<StructuralSummary>();
   const [navigation, setNavigation] = useState<NavigationSummary>();
+  const [identity, setIdentity] = useState<IdentityAssessment>();
 
   useEffect(() => {
     void getCurrentOrigin().then(setOrigin);
     void getCurrentUrlAnalysis().then(setAnalysis);
     void getCurrentNavigationSummary().then(setNavigation);
+    void getCurrentIdentityAssessment()
+      .then(setIdentity)
+      .catch(() => undefined);
     void getCurrentStructuralSummary()
       .then(setSummary)
       .catch(() => undefined);
@@ -114,6 +126,30 @@ export default function App() {
                 </span>
               </li>
             ))}
+          </ul>
+        </section>
+      )}
+
+      {identity && identity.summary.candidates.length > 0 && (
+        <section className="evidence" aria-label="Claimed identity evidence">
+          <p className="eyebrow">Claimed identity</p>
+          <ul>
+            {identity.summary.candidates.map((candidate) => (
+              <li key={candidate.identityId}>
+                <code>IDENTITY.CLAIM.{candidate.confidence.toUpperCase()}</code>
+                <span>
+                  {identityOrganization(candidate)} from{" "}
+                  {identitySourceText(candidate)}.
+                  {candidate.contexts.length > 0
+                    ? ` Context: ${identityContextText(candidate)}.`
+                    : ""}
+                </span>
+              </li>
+            ))}
+            <li>
+              <code>{identity.evidence[0]}</code>
+              <span>{identityComparisonText(identity)}</span>
+            </li>
           </ul>
         </section>
       )}

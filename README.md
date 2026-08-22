@@ -6,7 +6,7 @@ OriginLens is an open-source, privacy-first Chrome extension being built to
 detect phishing from identity claims, sensitive-data intent, verified domain
 relationships, and page behavior—not malicious-URL blocklists.
 
-## Current status: Stage 2 structural analysis
+## Current status: Stage 3 claimed identity
 
 The current build is a loadable Manifest V3 extension with early local signals.
 It provides:
@@ -20,11 +20,17 @@ It provides:
   overlays, eligible nested frames, DOM mutations, and SPA navigation;
 - explicit partial-coverage evidence for unavailable frames, traversal limits,
   and unobservable closed shadow roots;
+- bounded claimed-identity extraction from selected high-salience page surfaces;
+- a versioned, provenance-backed positive registry for five Latvian banks;
+- deterministic canonical, official-login, legacy-redirect, parent-domain, and
+  strong-mismatch facts with article, comparison, documentation, customer-logo,
+  payment, and OAuth/SSO context handling;
 - an event-driven service worker, no telemetry, analytics, or network endpoints.
 
-OriginLens does **not** identify claimed organizations, verify domains, issue
-phishing warnings, or block entry yet. See [ROADMAP.md](ROADMAP.md) for planned
-work; roadmap items are not implemented features.
+OriginLens does **not** resolve organizations outside its bundled registry,
+issue phishing warnings, or block entry yet. Identity/domain results are
+inspectable facts, not a verdict. See [ROADMAP.md](ROADMAP.md) for planned work;
+roadmap items are not implemented features.
 
 > **Important:** OriginLens cannot prove that a website is safe. It does not
 > replace Chrome's built-in protections or phishing-resistant authentication
@@ -32,12 +38,14 @@ work; roadmap items are not implemented features.
 
 ## Privacy baseline
 
-Stage 2 has a bundled isolated-world content script on HTTP(S) pages and
-eligible child frames. It counts bounded field and form structure but never
-accesses field values or registers input/keylogging handlers. It has no
-persistent storage, analytics, or application network calls. Current-navigation
-evidence retains at most eight origins in transient service-worker memory and
-discards paths and queries.
+Stage 3 has a bundled isolated-world content script on HTTP(S) pages and
+eligible child frames. It counts bounded field/form structure and matches
+bounded top-frame identity surfaces locally against known aliases. It never
+accesses field values or registers input/keylogging handlers. Only registry IDs,
+counts, confidence, contexts, and evidence codes cross the content boundary; raw
+page text does not. It has no persistent storage, analytics, or application
+network calls. Current-navigation evidence retains at most eight origins in
+transient service-worker memory and discards paths and queries.
 
 Future stages must never read, retain, log, hash, or transmit values entered in
 password, OTP, payment-card, recovery, seed-phrase, private-key, or other
@@ -70,8 +78,8 @@ Use the canonical hosted fixture index:
 `https://originlens.seleckis.lv/fixtures/`
 
 Stage acceptance instructions should link to that address directly. The hosted
-fixtures use fictional data, do not submit forms, and require no local fixture
-server.
+fixtures use fictional data, require no form submission during acceptance, and
+require no local fixture server.
 
 ### Test-download deployment
 
@@ -82,7 +90,7 @@ pnpm deploy:test-download
 ```
 
 This creates an integrity-checkable ZIP and serves it only at
-`https://originlens.seleckis.lv/originlens-stage-2.zip`. Chrome does not install
+`https://originlens.seleckis.lv/originlens-stage-3.zip`. Chrome does not install
 self-hosted extension ZIPs directly: extract the archive, then select its
 `chrome-mv3` directory with **Load unpacked** in `chrome://extensions`.
 
@@ -98,6 +106,12 @@ pnpm typecheck
 pnpm test
 pnpm build
 pnpm test:e2e
+```
+
+The nondestructive live-bank regression is separately opt-in:
+
+```bash
+RUN_LIVE_BANK_TESTS=1 pnpm test:banks:live
 ```
 
 For local fixture development only, run:

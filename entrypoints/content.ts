@@ -1,3 +1,4 @@
+import { extractClaimedIdentity } from "../lib/claimed-identity";
 import { analyzeDocument, STRUCTURAL_NODE_LIMIT } from "../lib/dom-analysis";
 
 export default defineContentScript({
@@ -16,6 +17,8 @@ export default defineContentScript({
         nestedFrame: window.top !== window,
         spaNavigationsObserved
       });
+    const currentIdentity = () =>
+      window.top === window ? extractClaimedIdentity(document) : undefined;
     const report = async () => {
       if (ctx.isInvalid) return;
       try {
@@ -36,14 +39,17 @@ export default defineContentScript({
       _sender: Browser.runtime.MessageSender,
       respond: (response?: unknown) => void
     ) => {
-      if (
-        !message ||
-        typeof message !== "object" ||
-        (message as { type?: unknown }).type !== "originlens.inspect-structure"
-      )
-        return undefined;
-      respond(currentSummary());
-      return true;
+      if (!message || typeof message !== "object") return undefined;
+      const type = (message as { type?: unknown }).type;
+      if (type === "originlens.inspect-structure") {
+        respond(currentSummary());
+        return true;
+      }
+      if (type === "originlens.inspect-identity" && window.top === window) {
+        respond(currentIdentity());
+        return true;
+      }
+      return undefined;
     };
 
     browser.runtime.onMessage.addListener(onMessage);

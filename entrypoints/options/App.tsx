@@ -18,7 +18,7 @@ export default function App() {
       </header>
 
       <section className="settings-card card">
-        <p className="eyebrow">Stage 2</p>
+        <p className="eyebrow">Stage 3</p>
         <h2>No configurable analysis yet</h2>
         <p className="muted">
           Detection settings will appear only when their behavior and privacy
@@ -36,7 +36,10 @@ export default function App() {
           </div>
           <div>
             <dt>Analysis</dt>
-            <dd>Local URL and bounded structural diagnostics</dd>
+            <dd>
+              Local URL, bounded structural, and provenance-backed identity
+              diagnostics
+            </dd>
           </div>
         </dl>
 
