@@ -1,4 +1,10 @@
 import {
+  compareClaimToUrl,
+  isPageIdentitySummary,
+  type IdentityAssessment,
+  type PageIdentitySummary
+} from "./claimed-identity";
+import {
   combineFrameStructuralSummaries,
   isFrameStructuralSummary,
   STRUCTURAL_FRAME_LIMIT,
@@ -11,6 +17,57 @@ import {
 } from "./navigation-analysis";
 import { toDisplayOrigin, type DisplayOrigin } from "./origin";
 import { analyzeUrl, type UrlAnalysis } from "./url-analysis";
+
+const frameInjections = new Map<string, Promise<void>>();
+
+async function ensureContentScript(tabId: number, frameId: number) {
+  const key = `${tabId}:${frameId}`;
+  const existing = frameInjections.get(key);
+  if (existing) return existing;
+  const injection = browser.scripting
+    .executeScript({
+      files: ["/content-scripts/content.js"],
+      target: { tabId, frameIds: [frameId] }
+    })
+    .then(() => undefined);
+  frameInjections.set(key, injection);
+  try {
+    await injection;
+  } catch (error) {
+    frameInjections.delete(key);
+    throw error;
+  }
+}
+
+async function inspectFrameValue<T>(
+  tabId: number,
+  frameId: number,
+  type: "originlens.inspect-identity" | "originlens.inspect-structure",
+  validate: (value: unknown) => value is T
+): Promise<T | undefined> {
+  const request = async () => {
+    const response: unknown = await browser.tabs.sendMessage(
+      tabId,
+      { type },
+      { frameId }
+    );
+    return validate(response) ? response : undefined;
+  };
+
+  try {
+    const existing = await request();
+    if (existing) return existing;
+  } catch {
+    /* Tabs opened before installation need the packaged fallback injection. */
+  }
+
+  try {
+    await ensureContentScript(tabId, frameId);
+    return await request();
+  } catch {
+    return undefined;
+  }
+}
 
 export async function getCurrentOrigin(): Promise<DisplayOrigin> {
   try {
@@ -54,31 +111,23 @@ async function inspectFrame(
   tabId: number,
   frameId: number
 ): Promise<FrameStructuralSummary | undefined> {
-  const request = async () => {
-    const response: unknown = await browser.tabs.sendMessage(
-      tabId,
-      { type: "originlens.inspect-structure" },
-      { frameId }
-    );
-    return isFrameStructuralSummary(response) ? response : undefined;
-  };
+  return inspectFrameValue(
+    tabId,
+    frameId,
+    "originlens.inspect-structure",
+    isFrameStructuralSummary
+  );
+}
 
-  try {
-    const existing = await request();
-    if (existing) return existing;
-  } catch {
-    /* Tabs opened before installation need the packaged fallback injection. */
-  }
-
-  try {
-    await browser.scripting.executeScript({
-      files: ["/content-scripts/content.js"],
-      target: { tabId, frameIds: [frameId] }
-    });
-    return await request();
-  } catch {
-    return undefined;
-  }
+async function inspectIdentity(
+  tabId: number
+): Promise<PageIdentitySummary | undefined> {
+  return inspectFrameValue(
+    tabId,
+    0,
+    "originlens.inspect-identity",
+    isPageIdentitySummary
+  );
 }
 
 export async function getStructuralSummaryForTab(
@@ -123,6 +172,35 @@ export async function getNavigationSummaryForTab(
       tabId
     });
     return isNavigationSummary(summary) ? summary : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function getIdentityAssessmentForTab(
+  tabId: number | undefined
+): Promise<IdentityAssessment | undefined> {
+  if (typeof tabId !== "number") return undefined;
+  try {
+    const [summary, tab] = await Promise.all([
+      inspectIdentity(tabId),
+      browser.tabs.get(tabId)
+    ]);
+    return summary ? compareClaimToUrl(summary, tab.url) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function getCurrentIdentityAssessment(): Promise<
+  IdentityAssessment | undefined
+> {
+  try {
+    const [tab] = await browser.tabs.query({
+      active: true,
+      currentWindow: true
+    });
+    return getIdentityAssessmentForTab(tab?.id);
   } catch {
     return undefined;
   }

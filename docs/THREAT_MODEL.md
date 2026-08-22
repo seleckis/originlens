@@ -34,7 +34,7 @@ inaccessible frames. Unknown visibility must remain unknown, not benign.
 Compromised browsers, operating systems, and extension signing infrastructure
 are outside the extension's enforcement boundary.
 
-## Stage 2 attack surface
+## Stage 3 attack surface
 
 Stage 2 injects a bundled isolated-world script into HTTP(S) pages. The script
 considers the DOM hostile and exposes a schema-validated structural response
@@ -45,3 +45,15 @@ messaging endpoint.
 
 Closed shadow roots and inaccessible frames are not evidence of benignness. They
 remain unobserved and must become `unknown` in later policy stages.
+
+Stage 3 additionally reads bounded text from selected top-frame title, heading,
+metadata, favicon, accessible-image, high-salience, footer/legal, and
+login-related surfaces. Page text is matched locally only against known aliases.
+Only registry IDs, confidence, context, counts, and stable evidence codes cross
+the content boundary; raw strings do not. Context keywords cannot suppress a
+claim when password or OTP structure is present.
+
+The bundled positive registry is not a malicious-domain list and is not assumed
+complete. Each relationship has provenance and a re-verification date. Unknown
+organizations and domains remain unverified; a strong mismatch is an observed
+fact, not a Stage 3 warning or blocking decision.

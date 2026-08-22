@@ -41,7 +41,22 @@ const pages: Record<string, string> = {
     <h1>Frame fixture</h1>
     <iframe src="/frame-child"></iframe>
     <iframe src="http://127.0.0.1:4175/frame-child"></iframe>
-    <iframe srcdoc="<form><input autocomplete='one-time-code'></form>"></iframe>`
+    <iframe srcdoc="<form><input autocomplete='one-time-code'></form>"></iframe>`,
+  "/identity-mismatch": `<!doctype html>
+    <title>Swedbank secure login</title>
+    <meta property="og:site_name" content="Swedbank">
+    <header>Swedbank</header><h1>Sign in to Swedbank</h1>
+    <form><input autocomplete="username"><input type="password" value="fake-identity-secret-never-captured"><button type="button">Sign in</button></form>`,
+  "/verified-swedbank":
+    "<!doctype html><title>Swedbank Latvia</title><header>Swedbank</header><h1>Internet banking</h1>",
+  "/bank-article":
+    '<!doctype html><title>News: Swedbank quarterly results</title><meta property="og:type" content="article"><article><h1>Swedbank quarterly results</h1></article>',
+  "/bank-comparison":
+    "<!doctype html><title>SEB versus Citadele comparison</title><h1>Compare SEB and Citadele</h1>",
+  "/payment-context":
+    '<!doctype html><title>Checkout payment providers</title><h1>Choose a payment provider</h1><img alt="Pay with Citadele">',
+  "/oauth-context":
+    "<!doctype html><title>Single sign-on chooser</title><h1>Continue with SEB</h1><button>Continue with SEB</button>"
 };
 
 async function extensionWorker(): Promise<Worker> {
@@ -118,7 +133,8 @@ test.beforeAll(async () => {
     headless: true,
     args: [
       `--disable-extensions-except=${extensionPath}`,
-      `--load-extension=${extensionPath}`
+      `--load-extension=${extensionPath}`,
+      "--host-resolver-rules=MAP fixture.example.test 127.0.0.1,MAP www.swedbank.lv 127.0.0.1"
     ]
   });
 });
@@ -256,7 +272,85 @@ test("keeps only current-navigation origins and redirect facts", async () => {
   await inspected.close();
 });
 
-test("loads Stage 2 locally without remote requests or security claims", async () => {
+test("reports a bounded strong identity mismatch without exposing page text", async () => {
+  const worker = await extensionWorker();
+  const extensionId = new URL(worker.url()).host;
+  const inspected = await context.newPage();
+  await inspected.goto("http://fixture.example.test:4174/identity-mismatch");
+  const tabId = await tabIdFor(worker, "http://fixture.example.test:4174/*");
+  const diagnostics = await openDiagnostics(extensionId, tabId);
+
+  await expect(
+    diagnostics.getByText("Swedbank Latvia", { exact: true })
+  ).toBeVisible();
+  await expect(diagnostics.getByText("strong identity claim")).toBeVisible();
+  await expect(
+    diagnostics.getByText("mismatch", { exact: true })
+  ).toBeVisible();
+  await expect(
+    diagnostics.getByText(
+      /example\.test is not in its verified domain relationships/
+    )
+  ).toBeVisible();
+  const body = await diagnostics.locator("body").innerText();
+  expect(body).not.toContain("fake-identity-secret-never-captured");
+
+  await inspected.close();
+  await diagnostics.close();
+});
+
+test("verifies a synthetic page on a provenance-backed domain", async () => {
+  const worker = await extensionWorker();
+  const extensionId = new URL(worker.url()).host;
+  const inspected = await context.newPage();
+  await inspected.goto("http://www.swedbank.lv:4174/verified-swedbank");
+  const tabId = await tabIdFor(worker, "http://www.swedbank.lv:4174/*");
+  const diagnostics = await openDiagnostics(extensionId, tabId);
+
+  await expect(
+    diagnostics.getByText("Swedbank Latvia", { exact: true })
+  ).toBeVisible();
+  await expect(
+    diagnostics.getByText("verified", { exact: true })
+  ).toBeVisible();
+  await expect(
+    diagnostics.getByText(/linked to swedbank\.lv as a canonical domain/)
+  ).toBeVisible();
+  expect(await diagnostics.locator("body").innerText()).not.toContain(
+    "not in its verified domain relationships"
+  );
+
+  await inspected.close();
+  await diagnostics.close();
+});
+
+test("keeps article, comparison, payment, and OAuth contexts non-mismatching", async () => {
+  const worker = await extensionWorker();
+  const extensionId = new URL(worker.url()).host;
+  for (const path of [
+    "bank-article",
+    "bank-comparison",
+    "payment-context",
+    "oauth-context"
+  ]) {
+    const inspected = await context.newPage();
+    await inspected.goto(`http://fixture.example.test:4174/${path}`);
+    const tabId = await tabIdFor(worker, "http://fixture.example.test:4174/*");
+    const diagnostics = await openDiagnostics(extensionId, tabId);
+
+    await expect(
+      diagnostics.getByText("not-applicable", { exact: true })
+    ).toBeVisible();
+    expect(await diagnostics.locator("body").innerText()).not.toContain(
+      "not in its verified domain relationships"
+    );
+
+    await inspected.close();
+    await diagnostics.close();
+  }
+});
+
+test("loads Stage 3 locally without remote requests or security claims", async () => {
   const worker = await extensionWorker();
   const manifest = await worker.evaluate(() => chrome.runtime.getManifest());
   const contentScript = manifest.content_scripts?.[0] as
@@ -299,6 +393,6 @@ test("loads Stage 2 locally without remote requests or security claims", async (
   ).toBeVisible();
   await expect(page.getByText("No endpoints configured")).toBeVisible();
   await expect(page.getByText("Disabled")).toBeVisible();
-  await expect(page.getByText("Structural only")).toBeVisible();
+  await expect(page.getByText("Bounded structure and identity")).toBeVisible();
   await page.close();
 });

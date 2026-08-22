@@ -22,6 +22,10 @@ const server = createServer((request, response) => {
     response.writeHead(302, { Location: "/benign-search.html" }).end();
     return;
   }
+  if (pathname === "/payment-redirect") {
+    response.writeHead(302, { Location: "/payment-redirect.html" }).end();
+    return;
+  }
   const file = resolve(
     root,
     `.${normalize(pathname === "/" ? "/index.html" : pathname)}`

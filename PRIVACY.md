@@ -3,20 +3,27 @@
 OriginLens is designed for local-first phishing analysis with data minimization
 as an architectural constraint.
 
-## Current behavior (Stage 2)
+## Current behavior (Stage 3)
 
-The Stage 2 build:
+The Stage 3 build:
 
 - displays the active page's origin after the user opens the popup;
 - uses isolated-world content scripts on HTTP(S) pages and eligible child frames
   to count bounded form structure; it has HTTP(S) host access for that purpose;
 - configures no application network endpoint;
 - has no storage, telemetry, or analytics;
-- does not read field values, page text, or DOM HTML;
+- never reads field values or DOM HTML;
+- reads at most 64 bounded strings from selected top-frame title, heading,
+  metadata, favicon, accessible-image, high-salience, footer/legal, and
+  login-related surfaces for local alias matching;
+- returns only known registry IDs, confidence, context, counts, and stable
+  evidence codes from identity analysis; raw page strings never cross the
+  content-script boundary;
 - retains at most eight origins for only the current top-level navigation in
   transient service-worker memory; paths, queries, and prior navigations are
   discarded;
-- has no phishing verdict or blocking behavior.
+- reports identity/domain relationships as facts but has no phishing warning or
+  blocking behavior.
 
 ## Enduring commitments
 

@@ -2,10 +2,12 @@
 
 ## Current behavior
 
-Stage 1 produces a local URL-only state: weak deterministic URL signals may
-produce `caution`; unavailable or restricted URLs produce `unknown`; otherwise
-the state is `no strong phishing indicators detected`. These are not identity
-verification or a safety claim.
+Stage 3 keeps the Stage 1 URL-only user state: weak deterministic URL signals
+may produce `caution`; unavailable or restricted URLs produce `unknown`;
+otherwise the state is `no strong phishing indicators detected`. Bounded
+claimed-identity and verified-domain relationships are inspectable facts, but
+they do not yet change the user state, warn, or block. None of these states is a
+safety claim.
 
 ## Required future states
 

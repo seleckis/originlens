@@ -4,7 +4,8 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 artifact_dir="$repo_root/dist"
-artifact_path="$artifact_dir/originlens-stage-2.zip"
+artifact_name="originlens-stage-3.zip"
+artifact_path="$artifact_dir/$artifact_name"
 checksum_path="$artifact_path.sha256"
 
 cd "$repo_root"
@@ -18,7 +19,10 @@ rm -f "$artifact_path" "$checksum_path"
   zip -q -r "$artifact_path" chrome-mv3
 )
 
-sha256sum "$artifact_path" > "$checksum_path"
+(
+  cd "$artifact_dir"
+  sha256sum "$artifact_name" > "$artifact_name.sha256"
+)
 
 printf 'Created %s\n' "$artifact_path"
 printf 'Created %s\n' "$checksum_path"
