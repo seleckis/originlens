@@ -1,5 +1,11 @@
 import { extractClaimedIdentity } from "../lib/claimed-identity";
+import { createBehaviorTracker } from "../lib/behavior-analysis";
+import { isDecisionSummary } from "../lib/decision-policy";
 import { analyzeDocument, STRUCTURAL_NODE_LIMIT } from "../lib/dom-analysis";
+import {
+  createPageIntervention,
+  type PageIntervention
+} from "../lib/page-intervention";
 
 export default defineContentScript({
   matches: ["http://*/*", "https://*/*"],
@@ -11,6 +17,10 @@ export default defineContentScript({
   main(ctx) {
     let timer: number | undefined;
     let spaNavigationsObserved = 0;
+    let intervention: PageIntervention | undefined;
+    const behavior = createBehaviorTracker(document, {
+      nestedFrame: window.top !== window
+    });
 
     const currentSummary = () =>
       analyzeDocument(document, {
@@ -24,7 +34,9 @@ export default defineContentScript({
       try {
         await browser.runtime.sendMessage({
           type: "originlens.structural-summary",
-          summary: currentSummary()
+          summary: currentSummary(),
+          behavior: behavior.current(),
+          ...(window.top === window ? { identity: currentIdentity() } : {})
         });
       } catch {
         /* The extension may be reloaded while this isolated context is active. */
@@ -49,11 +61,44 @@ export default defineContentScript({
         respond(currentIdentity());
         return true;
       }
+      if (type === "originlens.inspect-behavior") {
+        respond(behavior.current());
+        return true;
+      }
+      if (type === "originlens.decision-update" && window.top === window) {
+        const decision = (message as { decision?: unknown }).decision;
+        if (isDecisionSummary(decision)) intervention?.update(decision);
+        return undefined;
+      }
       return undefined;
     };
 
+    if (window.top === window) {
+      intervention = createPageIntervention(document, {
+        onBypass: async () => {
+          const response: unknown = await browser.runtime.sendMessage({
+            type: "originlens.warning-bypassed"
+          });
+          if (
+            !isDecisionSummary(response) ||
+            response.intervention !== "bypassed"
+          )
+            return false;
+          intervention?.update(response);
+          return true;
+        }
+      });
+    }
     browser.runtime.onMessage.addListener(onMessage);
-    const observer = new MutationObserver(schedule);
+    const onClick = (event: MouseEvent) => {
+      behavior.observeClick(event.target);
+      schedule();
+    };
+    document.addEventListener("click", onClick, true);
+    const observer = new MutationObserver((records) => {
+      behavior.observeMutations(records);
+      schedule();
+    });
     observer.observe(document.documentElement, {
       childList: true,
       subtree: true,
@@ -71,15 +116,23 @@ export default defineContentScript({
       ]
     });
     ctx.addEventListener(window, "wxt:locationchange", () => {
+      intervention?.reset();
+      behavior.observeSpaNavigation();
       spaNavigationsObserved = Math.min(
         STRUCTURAL_NODE_LIMIT,
         spaNavigationsObserved + 1
       );
-      schedule();
+      if (window.top === window) {
+        void browser.runtime
+          .sendMessage({ type: "originlens.reset-intervention" })
+          .finally(schedule);
+      } else schedule();
     });
     ctx.onInvalidated(() => {
       observer.disconnect();
       browser.runtime.onMessage.removeListener(onMessage);
+      document.removeEventListener("click", onClick, true);
+      intervention?.destroy();
       if (timer !== undefined) window.clearTimeout(timer);
     });
     void report();

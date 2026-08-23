@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta property="og:site_name" content="Citadele" />
+    <title>Citadele changing destination — synthetic harmful fixture</title>
+  </head>
+  <body>
+    <header><strong>Citadele</strong></header>
+    <main>
+      <h1>Citadele online bank login</h1>
+      <p>
+        After the warning is deliberately bypassed, the test button changes the
+        fake form destination to a raw IP. The form never submits.
+      </p>
+      <form id="login" action="/discard">
+        <label>User ID <input autocomplete="username" /></label>
+        <label
+          >Password <input type="password" autocomplete="current-password"
+        /></label>
+        <button type="button">Sign in</button>
+      </form>
+      <button id="change" type="button">Change destination</button>
+    </main>
+    <script>
+      document.querySelector("#change").addEventListener("click", () => {
+        document
+          .querySelector("#login")
+          .setAttribute("action", "http://127.0.0.1/discard");
+      });
+    </script>
+  </body>
+</html>

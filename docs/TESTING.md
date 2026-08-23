@@ -19,7 +19,7 @@ a verified legitimate bank is release-blocking.
 These categories remain separately selectable as they are introduced. Normal CI
 never depends on live websites.
 
-## Stage 3 commands
+## Release-candidate commands
 
 ```bash
 pnpm lint
@@ -27,21 +27,27 @@ pnpm format:check
 pnpm typecheck
 pnpm test
 pnpm build
+pnpm performance:check
 pnpm test:e2e
+pnpm verify:reproducible
 ```
 
 The Playwright tests launch bundled Chromium with only the production extension
 build enabled. They verify the manifest boundary, nested-frame aggregation,
 mutation and SPA updates, current-navigation redirect evidence, sanitized
 summaries, claimed identity, verified and mismatched domains, benign identity
-contexts, and the popup's honest capability state. They do not submit
-credentials or test Stage 4 warning behavior.
+contexts, bounded behavior, every hosted fixture, multilingual warning and
+non-warning cases, signed resolver/local comparison, resolver failure, sanitized
+exports, explicit three-gate decisions, badge state, warning timing, keyboard
+focus, bypass/reset behavior, and false-positive cases for verified and unknown
+organizations. They do not submit credentials.
 
 ## Test-download artifact
 
-`pnpm package:test-download` creates `dist/originlens-stage-3.zip` and its
-SHA-256 companion file from the production build. The ZIP contains the
-`chrome-mv3` directory required by Chrome's **Load unpacked** flow.
+`pnpm package:test-download` creates `dist/originlens-release-candidate.zip`,
+its SHA-256 companion file, and a CycloneDX SBOM from the production build. The
+ZIP contains the `chrome-mv3` directory required by Chrome's **Load unpacked**
+flow and the SBOM.
 
 `pnpm deploy:test-download` additionally installs the static artifact and the
 Nginx vhost on the local host. It exposes the ZIP, checksum, and separately
@@ -59,6 +65,39 @@ information in diagnostics.
 The canonical manual Chrome acceptance index is:
 
 `https://fixtures.example.invalid/fixtures/`
+
+### Release-candidate hosted acceptance
+
+After deploying `originlens-release-candidate.zip`, load its extracted
+`chrome-mv3` directory in Chrome and use only the hosted fixture index above:
+
+1. **Claimed bank identity on a mismatched domain** must display the modal
+   **Possible phishing page** before manual field entry. It must name Swedbank
+   Latvia, show the actual registrable domain `example.invalid`, state that
+   sensitive data is requested, focus **Leave this page**, and show a red `!`
+   badge.
+2. Tab and Shift+Tab must remain within the warning actions. Choosing **Continue
+   anyway** must dismiss the dialog for that navigation while Popup and
+   Diagnostics still show `Danger` and a bypassed intervention. Reloading must
+   restore the warning.
+3. After bypass, type a fictional marker in the password field without
+   submitting. Popup and Diagnostics must never display that marker.
+4. **Unknown-brand login** must not display a modal: sensitive intent alone is
+   insufficient. The article, comparison, documentation, customer-logo,
+   payment-redirect, and OAuth/SSO fixtures must also remain non-interrupting.
+5. Existing Stage 2 structural fixtures must remain inspectable. No acceptance
+   step submits any form.
+6. **Potentially harmful delayed bank login** must initially show no modal, then
+   begin showing **Possible phishing page** when the form appears. The click-
+   triggered, Latvian, and Russian harmful fixtures must warn;
+   canvas/split-text, shared-hosting, articles, comparison, payment, OAuth, and
+   documentation fixtures must remain non-interrupting.
+7. Diagnostics must show behavioral evidence/coverage, the optional resolver as
+   disabled by default, and no packaged ML model. Download the sanitized export
+   and confirm it contains no visited address or test field marker.
+8. Resolver self-hosting is a separate optional check documented in
+   [IDENTITY_RESOLVER.md](IDENTITY_RESOLVER.md); disabling or disconnecting it
+   must leave local analysis functional.
 
 Use that hosted address in stage-end acceptance instructions. Manual checks do
 not require form submission; synthetic credential controls are non-submitting,

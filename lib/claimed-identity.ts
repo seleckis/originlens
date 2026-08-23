@@ -54,7 +54,8 @@ export type IdentityComparisonEvidenceCode =
   | "IDENTITY.DOMAIN.LEGACY_REDIRECT"
   | "IDENTITY.DOMAIN.MISMATCH"
   | "IDENTITY.DOMAIN.OFFICIAL_LOGIN"
-  | "IDENTITY.DOMAIN.PARENT_ORGANIZATION";
+  | "IDENTITY.DOMAIN.PARENT_ORGANIZATION"
+  | "IDENTITY.DOMAIN.RESOLVER_CANDIDATE";
 
 export type IdentityAssessment = {
   summary: PageIdentitySummary;
@@ -89,6 +90,17 @@ const contextCodes = new Set<IdentityContextCode>([
   "IDENTITY.CONTEXT.DOCUMENTATION",
   "IDENTITY.CONTEXT.OAUTH_SSO",
   "IDENTITY.CONTEXT.PAYMENT"
+]);
+
+const comparisonEvidenceCodes = new Set<IdentityComparisonEvidenceCode>([
+  "IDENTITY.CLAIM.INSUFFICIENT",
+  "IDENTITY.CLAIM.MULTIPLE_ORGANIZATIONS",
+  "IDENTITY.DOMAIN.CANONICAL",
+  "IDENTITY.DOMAIN.LEGACY_REDIRECT",
+  "IDENTITY.DOMAIN.MISMATCH",
+  "IDENTITY.DOMAIN.OFFICIAL_LOGIN",
+  "IDENTITY.DOMAIN.PARENT_ORGANIZATION",
+  "IDENTITY.DOMAIN.RESOLVER_CANDIDATE"
 ]);
 
 function normalize(value: string): string {
@@ -364,6 +376,31 @@ export function isPageIdentitySummary(
   });
 }
 
+export function isIdentityAssessment(
+  value: unknown
+): value is IdentityAssessment {
+  if (!value || typeof value !== "object") return false;
+  const assessment = value as Record<string, unknown>;
+  return (
+    isPageIdentitySummary(assessment.summary) &&
+    ["mismatch", "not-applicable", "verified"].includes(
+      String(assessment.domainStatus)
+    ) &&
+    Array.isArray(assessment.evidence) &&
+    assessment.evidence.length > 0 &&
+    assessment.evidence.length <= comparisonEvidenceCodes.size &&
+    assessment.evidence.every((code) =>
+      comparisonEvidenceCodes.has(code as IdentityComparisonEvidenceCode)
+    ) &&
+    (assessment.organization === undefined ||
+      (typeof assessment.organization === "string" &&
+        assessment.organization.length <= IDENTITY_TEXT_LIMIT)) &&
+    (assessment.registrableDomain === undefined ||
+      (typeof assessment.registrableDomain === "string" &&
+        assessment.registrableDomain.length <= 253))
+  );
+}
+
 function relationshipEvidence(
   relationship: DomainRelationship
 ): IdentityComparisonEvidenceCode {
@@ -376,6 +413,8 @@ function relationshipEvidence(
       return "IDENTITY.DOMAIN.OFFICIAL_LOGIN";
     case "parent-organization":
       return "IDENTITY.DOMAIN.PARENT_ORGANIZATION";
+    case "resolver-candidate":
+      return "IDENTITY.DOMAIN.RESOLVER_CANDIDATE";
   }
 }
 

@@ -37,6 +37,20 @@ body {
   border-radius: 50%;
 }
 
+.status-card[data-state="danger"] .status-dot {
+  border-color: #a62020;
+  background: #a62020;
+}
+
+.status-card[data-state="danger"] h2 {
+  color: #8f1d1d;
+}
+
+.status-card[data-state="caution"] .status-dot {
+  border-color: #9a5b13;
+  background: #9a5b13;
+}
+
 .status-card h2 {
   margin: 0;
   color: #26312c;

@@ -1,63 +1,69 @@
 # Architecture
 
-## Stage 3 topology
+## Release-candidate topology
 
-OriginLens is a Chrome Manifest V3 extension built with WXT and React.
+OriginLens is a Chrome Manifest V3 extension built with WXT, strict TypeScript,
+and React.
 
 ```text
-page/frame DOM (untrusted) ──► isolated-world content scripts ── bounded per-frame structure
-       ▲                                      │                                  │
-       │                                      ├── no field values / listeners    ▼
-       │                                      └── top-frame registry IDs ──► on-demand collector
-active browser tab ◄────────────────────────────────────────────────────────► popup/diagnostics
-                                                                                     │
-positive registry ── aliases + provenance + domain relationships ────────────────────┤
-webNavigation ── current navigation origins only ──► MV3 service worker ──────────────┘
-active browser tab ── ephemeral activeTab URL ─► local registrable-domain comparison
-
-Popup and Diagnostics first request current summaries from eligible frames. If a
-tab or frame predates installation, the collector injects the same bundled file
-into only that frame and retries. At most 32 frame summaries are aggregated.
-Unavailable or excess frames and bounded-scan limits produce explicit partial
-coverage evidence. Closed shadow roots remain explicitly unobservable.
-
-The service worker stores per-frame summaries transiently so mutation and SPA
-updates remain inspectable. It also retains at most eight origins from only the
-current top-level navigation. A new navigation clears the prior state; URL paths
-and queries are never stored.
-
-network/backend: none
-persistent storage: none
+hostile page/frame DOM
+  │ isolated-world, bounded/value-free inspection
+  ▼
+structure + registry IDs + behavior counts/codes
+  │ validated private extension messages
+  ▼
+MV3 service worker ── local registry + URL/PSL + explicit decision gates
+  ├── transient per-tab aggregate, redirect origins, bypass, badge
+  ├── top-frame accessible warning
+  ├── popup and diagnostics
+  └── optional signed resolver ── organization + locale only
+                                      │
+                                      └── candidate domains/provenance
+                                           (comparison stays local)
 ```
 
-Claimed identity is inspected on demand in the top frame. The content script
-scans at most 64 selected strings, each bounded to 160 characters and 32 text
-nodes, and matches only aliases in the bundled registry. The response contains
-registry IDs and stable codes, never matched strings. The extension page reduces
-the active URL to a registrable domain, compares it locally, and does not retain
-the full URL.
+Content scripts run in eligible HTTP(S) frames and report at most 32 bounded
+frame summaries. A frame tracker caps behavior events at 64. Closed shadow
+roots, inaccessible/excess frames, canvas text, arbitrary JavaScript data flow,
+and request bodies are not treated as benign; supported limits produce explicit
+partial/unknown evidence. Sensitive field values are never read.
 
-The popup reduces the tab URL to `URL.origin` before display. Paths, query
-strings, and fragments are neither rendered nor persisted. Restricted browser
-pages are reported as restricted rather than interpreted as websites.
+The top frame scans at most 64 selected identity strings, each capped at 160
+characters and 32 text nodes. It matches them locally against registry aliases
+and sends only registry IDs, source/context codes, confidence, and bounds. Raw
+page strings do not cross the content boundary.
 
-## Trust boundaries
+The service worker retains only current-navigation facts in memory: per-frame
+summaries, top-frame identity, resolver result/cache, decision, bypass, and at
+most eight redirect origins. Paths and queries are discarded. A top-level/SPA
+navigation resets analysis and bypass state. Options persist only resolver
+configuration in `storage.local`; no page state or browsing history is stored.
 
-Page analysis runs in an isolated-world content script. Page input is untrusted
-even across the isolated-world boundary because the page controls the shared
-DOM. Only bounded, validated structural aggregates and claimed-identity registry
-IDs cross the extension boundary. Raw page strings and field values are outside
-the permitted data model.
+Danger requires strong identity, value-free sensitive intent, and a verified
+domain mismatch. Behavior cannot substitute for a gate. Danger shows a red `!`
+badge and an accessible modal warning; bypass is navigation-scoped and does not
+change the verdict. Caution is amber, unknown is gray, and no state is green.
 
-The service worker coordinates deterministic analyzers and UI state. It is
-event-driven and does not assume in-memory state survives suspension. No backend
-is permitted before Stage 6; remote identity resolution remains optional when
-introduced.
+## Optional resolver
 
-## Module principles
+The disabled-by-default resolver accepts a strict request containing a fixed
+version plus normalized organization and locale. Fetch omits credentials and
+referrer, rejects redirects, and times out. Responses are size/schema bounded,
+Ed25519 signed, request/key-bound, short-lived, cached in bounded memory, and
+rate-limited. Candidate matching to the actual registrable domain occurs only in
+the service worker. Failure preserves the bundled local decision.
 
-- Shared logic has explicit typed inputs and outputs independent of UI.
-- Evidence codes and explanations are deterministic and testable.
-- Facts remain distinguishable from weak signals and policy outcomes.
-- Permission additions require implementation need, tests, documentation, and an
-  architecture decision record.
+## Trust and packaging boundaries
+
+- Page-controlled DOM, attributes, events, URLs, and resolver responses are
+  hostile inputs.
+- Only explicit schemas, counts, enum codes, and registry IDs cross message
+  boundaries.
+- Extension code is packaged locally under an explicit MV3 CSP; no remote code,
+  analytics, model runtime, or model weights are included.
+- Sanitized exports omit visited locations, resolver endpoints, raw content,
+  field values, and history.
+- Build output is budgeted, has a CycloneDX SBOM, and is packaged reproducibly.
+- Every permission increase requires an ADR. Current permissions are
+  `activeTab`, `scripting`, `storage`, and `webNavigation`, with HTTP(S) host
+  access needed for proactive all-frame analysis.

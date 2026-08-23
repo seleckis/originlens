@@ -22,7 +22,11 @@ export type IdentityAlias = {
 };
 
 export type DomainRelationship =
-  "canonical" | "legacy-redirect" | "official-login" | "parent-organization";
+  | "canonical"
+  | "legacy-redirect"
+  | "official-login"
+  | "parent-organization"
+  | "resolver-candidate";
 
 export type VerifiedIdentityDomain = {
   domain: string;

@@ -1,8 +1,9 @@
 # Dataset and model licensing
 
-No third-party datasets or model weights are included in Stage 3.
+No third-party datasets, model runtimes, or model weights are included in the
+release candidate.
 
-Stage 3 bundles the human-reviewed positive identity registry in
+The release candidate bundles the human-reviewed positive identity registry in
 `lib/identity-registry.ts`. It contains factual organization names, aliases,
 domain relationships, and source URLs curated from official bank and regulator
 pages; it does not copy page text, logos, screenshots, or third-party datasets.

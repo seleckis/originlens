@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta property="og:site_name" content="SEB" />
+    <title>SEB click-triggered login — synthetic harmful fixture</title>
+  </head>
+  <body>
+    <header><strong>SEB</strong></header>
+    <main>
+      <h1>Continue to SEB internet bank</h1>
+      <p>
+        Clicking continue inserts a fake password form. No form submits data.
+      </p>
+      <button id="reveal" type="button">Continue to login</button>
+      <div id="target"></div>
+    </main>
+    <script>
+      document.querySelector("#reveal").addEventListener("click", () => {
+        document.querySelector("#target").innerHTML = `
+          <form>
+            <label>User ID <input autocomplete="username"></label>
+            <label>Password <input type="password" autocomplete="current-password"></label>
+            <button type="button">Sign in</button>
+          </form>`;
+      });
+    </script>
+  </body>
+</html>

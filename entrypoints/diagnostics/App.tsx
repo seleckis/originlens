@@ -1,11 +1,22 @@
 import { useEffect, useState } from "react";
 
 import {
+  getBehaviorSummaryForTab,
+  getDecisionSummaryForTab,
   getIdentityAssessmentForTab,
   getNavigationSummaryForTab,
+  getResolverStatus,
   getStructuralSummaryForTab
 } from "../../lib/current-origin";
+import type { BehaviorSummary } from "../../lib/behavior-analysis";
+import { behaviorEvidenceText } from "../../lib/behavior-explanations";
 import type { IdentityAssessment } from "../../lib/claimed-identity";
+import {
+  decisionEvidenceText,
+  decisionHeading,
+  decisionSensitiveIntentText
+} from "../../lib/decision-explanations";
+import type { DecisionSummary } from "../../lib/decision-policy";
 import type { StructuralSummary } from "../../lib/dom-analysis";
 import {
   identityComparisonText,
@@ -14,6 +25,9 @@ import {
   identitySourceText
 } from "../../lib/identity-explanations";
 import type { NavigationSummary } from "../../lib/navigation-analysis";
+import type { ResolverStatus } from "../../lib/identity-resolver";
+import { localMlCapability } from "../../lib/ml-capability";
+import { createSanitizedDiagnostics } from "../../lib/diagnostics-export";
 import { analyzeUrl } from "../../lib/url-analysis";
 
 const checks = [
@@ -24,13 +38,14 @@ const checks = [
   },
   {
     label: "Required permissions",
-    value: "activeTab, scripting, and webNavigation",
-    detail: "Current-tab analysis, packaged injection, and bounded redirects"
+    value: "activeTab, scripting, storage, and webNavigation",
+    detail:
+      "Current-tab analysis, packaged injection, local settings, and bounded redirects"
   },
   {
     label: "Network",
-    value: "No endpoints configured",
-    detail: "This build contains no application network calls"
+    value: "Optional resolver disabled by default",
+    detail: "Resolver use requires explicit user configuration"
   },
   {
     label: "Telemetry",
@@ -39,7 +54,7 @@ const checks = [
   },
   {
     label: "Page analysis",
-    value: "Bounded structure and identity",
+    value: "Bounded structure, identity, and decision gates",
     detail: "Field values and raw page text never cross the content boundary"
   }
 ] as const;
@@ -55,6 +70,28 @@ export default function App() {
   const [summary, setSummary] = useState<StructuralSummary>();
   const [navigation, setNavigation] = useState<NavigationSummary>();
   const [identity, setIdentity] = useState<IdentityAssessment>();
+  const [decision, setDecision] = useState<DecisionSummary>();
+  const [behavior, setBehavior] = useState<BehaviorSummary>();
+  const [resolver, setResolver] = useState<ResolverStatus>();
+  const downloadSanitizedDiagnostics = () => {
+    const exported = createSanitizedDiagnostics({
+      ...(behavior ? { behavior } : {}),
+      ...(decision ? { decision } : {}),
+      ...(identity ? { identity } : {}),
+      ...(resolver ? { resolver } : {}),
+      ...(summary ? { structural: summary } : {})
+    });
+    const url = URL.createObjectURL(
+      new Blob([`${JSON.stringify(exported, null, 2)}\n`], {
+        type: "application/json"
+      })
+    );
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "originlens-sanitized-diagnostics.json";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
   useEffect(() => {
     const tabId = Number(new URLSearchParams(location.search).get("tabId"));
     const inspectedTabId = Number.isInteger(tabId) ? tabId : undefined;
@@ -66,6 +103,15 @@ export default function App() {
       .catch(() => undefined);
     void getIdentityAssessmentForTab(inspectedTabId)
       .then(setIdentity)
+      .catch(() => undefined);
+    void getDecisionSummaryForTab(inspectedTabId)
+      .then(setDecision)
+      .catch(() => undefined);
+    void getBehaviorSummaryForTab(inspectedTabId)
+      .then(setBehavior)
+      .catch(() => undefined);
+    void getResolverStatus()
+      .then(setResolver)
       .catch(() => undefined);
   }, []);
   return (
@@ -83,7 +129,7 @@ export default function App() {
       </header>
       <section className="diagnostics-card card" aria-labelledby="build-facts">
         <p className="eyebrow">Local extension state</p>
-        <h2 id="build-facts">Stage 3 build facts</h2>
+        <h2 id="build-facts">Build facts</h2>
         <p className="muted">
           These are extension configuration facts, not a verdict about any
           website.
@@ -102,6 +148,132 @@ export default function App() {
             </li>
           ))}
         </ul>
+        <button
+          className="button"
+          type="button"
+          onClick={downloadSanitizedDiagnostics}
+        >
+          Download sanitized diagnostics
+        </button>
+      </section>
+      <section className="diagnostics-card card" aria-labelledby="resolver">
+        <p className="eyebrow">Optional resolver</p>
+        <h2 id="resolver">Outbound privacy audit</h2>
+        <p className="muted">
+          The resolver protocol permits only normalized organization, locale,
+          and a fixed protocol version. Domain comparison stays local.
+        </p>
+        <ul>
+          <li>
+            <span className="check-mark" aria-hidden="true">
+              ·
+            </span>
+            <div>
+              <span className="check-label">Configuration</span>
+              <strong>
+                {resolver?.enabled ? "Enabled" : "Disabled by default"}
+              </strong>
+              <small>
+                Endpoint origin {resolver?.endpointOrigin ?? "none"}; outbound
+                page-derived fields{" "}
+                {resolver?.outboundFields.join(", ") ?? "organization, locale"}
+              </small>
+            </div>
+          </li>
+          <li>
+            <span className="check-mark" aria-hidden="true">
+              ·
+            </span>
+            <div>
+              <span className="check-label">Last resolver result</span>
+              <strong>{resolver?.lastResult?.status ?? "No request"}</strong>
+              <small>
+                {resolver?.lastResult
+                  ? `${resolver.lastResult.evidenceCode}; normalized organization ${resolver.lastResult.organization}; locale ${resolver.lastResult.locale}; candidates ${resolver.lastResult.candidateCount}`
+                  : "No visited URL, domain, path, query, DOM, page text, screenshot, or history is in the request schema."}
+              </small>
+            </div>
+          </li>
+        </ul>
+      </section>
+      <section className="diagnostics-card card" aria-labelledby="ml-gate">
+        <p className="eyebrow">Optional local ML</p>
+        <h2 id="ml-gate">Decision gate</h2>
+        <p className="muted">{localMlCapability.reason}</p>
+        <ul>
+          <li>
+            <span className="check-mark" aria-hidden="true">
+              ·
+            </span>
+            <div>
+              <span className="check-label">Packaged model</span>
+              <strong>Not included</strong>
+              <small>
+                Model bytes {localMlCapability.modelBytes}; runtime dependencies{" "}
+                {localMlCapability.runtimeDependencies.length}; deterministic
+                analysis remains fully functional
+              </small>
+            </div>
+          </li>
+        </ul>
+      </section>
+      <section className="diagnostics-card card" aria-labelledby="decision">
+        <p className="eyebrow">Current tab</p>
+        <h2 id="decision">Decision policy</h2>
+        <p className="muted">
+          Danger requires a strong identity claim, sensitive-data intent, and a
+          provenance-backed domain mismatch. The policy does not use an additive
+          score.
+        </p>
+        {decision ? (
+          <ul>
+            <li>
+              <span className="check-mark" aria-hidden="true">
+                ·
+              </span>
+              <div>
+                <span className="check-label">User-facing state</span>
+                <strong>{decisionHeading(decision.state)}</strong>
+                <small>Intervention: {decision.intervention}</small>
+              </div>
+            </li>
+            <li>
+              <span className="check-mark" aria-hidden="true">
+                ·
+              </span>
+              <div>
+                <span className="check-label">Explicit gates</span>
+                <strong>
+                  Identity {String(decision.gates.strongIdentityClaim)};
+                  sensitive intent {String(decision.gates.sensitiveDataIntent)};
+                  domain mismatch{" "}
+                  {String(decision.gates.verifiedDomainMismatch)}
+                </strong>
+                <small>
+                  Organization {decision.organization ?? "none"}; actual domain{" "}
+                  {decision.registrableDomain ?? "unavailable"}; intent{" "}
+                  {decisionSensitiveIntentText(decision) || "none"}
+                </small>
+              </div>
+            </li>
+            {decision.evidence.map((code) => (
+              <li key={code}>
+                <span className="check-mark" aria-hidden="true">
+                  ·
+                </span>
+                <div>
+                  <span className="check-label">{code}</span>
+                  <strong>{decisionEvidenceText(code)}</strong>
+                  <small>Stable, inspectable policy evidence</small>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="muted">
+            Decision evidence is unavailable for this page.
+          </p>
+        )}
       </section>
       <section className="diagnostics-card card" aria-labelledby="identity">
         <p className="eyebrow">Current tab</p>
@@ -230,6 +402,69 @@ export default function App() {
             No eligible page summary is available. Chrome pages and pages opened
             before this build was installed remain unknown.
           </p>
+        )}
+      </section>
+      <section className="diagnostics-card card" aria-labelledby="behavior">
+        <p className="eyebrow">Current tab</p>
+        <h2 id="behavior">Behavioral and destination context</h2>
+        <p className="muted">
+          Bounded event counts and destination categories are retained only for
+          this navigation. Request bodies, field values, clipboard contents, and
+          permission decisions are not collected.
+        </p>
+        {behavior ? (
+          <ul>
+            <li>
+              <span className="check-mark" aria-hidden="true">
+                ·
+              </span>
+              <div>
+                <span className="check-label">Observed changes</span>
+                <strong>
+                  Delayed fields {behavior.delayedSensitiveInsertions}; clicked
+                  fields {behavior.clickTriggeredSensitiveInsertions}; action
+                  mutations {behavior.actionMutations}; SPA login transitions{" "}
+                  {behavior.loginSpaTransitions}
+                </strong>
+                <small>
+                  Identity removals {behavior.identitySurfaceRemovals}; download
+                  clicks {behavior.suspiciousDownloadClicks}
+                </small>
+              </div>
+            </li>
+            <li>
+              <span className="check-mark" aria-hidden="true">
+                ·
+              </span>
+              <div>
+                <span className="check-label">Destinations</span>
+                <strong>
+                  Cross-origin sensitive actions{" "}
+                  {behavior.crossOriginSensitiveActions}; raw-IP sensitive
+                  actions {behavior.rawIpSensitiveActions}
+                </strong>
+                <small>
+                  Permission/clipboard controls{" "}
+                  {behavior.permissionOrClipboardControls}; canvas elements{" "}
+                  {behavior.canvasElements}; coverage {behavior.coverage}
+                </small>
+              </div>
+            </li>
+            {behavior.evidence.map((code) => (
+              <li key={code}>
+                <span className="check-mark" aria-hidden="true">
+                  ·
+                </span>
+                <div>
+                  <span className="check-label">{code}</span>
+                  <strong>{behaviorEvidenceText(code)}</strong>
+                  <small>Bounded Stage 5 evidence</small>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="muted">Behavioral context is unavailable.</p>
         )}
       </section>
       <section className="diagnostics-card card" aria-labelledby="navigation">

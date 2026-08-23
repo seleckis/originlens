@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta property="og:site_name" content="Swedbank" />
+    <title>Swedbank delayed secure login — synthetic harmful fixture</title>
+  </head>
+  <body>
+    <header><strong>Swedbank</strong></header>
+    <main>
+      <h1>Sign in to Swedbank</h1>
+      <p>
+        The fake credential form appears after a delay. OriginLens should begin
+        warning as soon as all three danger gates become observable.
+      </p>
+      <div id="target" aria-live="polite">Preparing login…</div>
+    </main>
+    <script>
+      setTimeout(() => {
+        document.querySelector("#target").innerHTML = `
+          <form>
+            <label>User ID <input autocomplete="username"></label>
+            <label>Password <input type="password" autocomplete="current-password"></label>
+            <button type="button">Sign in</button>
+          </form>`;
+      }, 1000);
+    </script>
+  </body>
+</html>

@@ -1,9 +1,23 @@
 import {
+  BEHAVIOR_FRAME_LIMIT,
+  combineFrameBehaviorSummaries,
+  isBehaviorSummary,
+  isFrameBehaviorSummary,
+  type BehaviorSummary,
+  type FrameBehaviorSummary
+} from "./behavior-analysis";
+import {
   compareClaimToUrl,
+  isIdentityAssessment,
   isPageIdentitySummary,
   type IdentityAssessment,
   type PageIdentitySummary
 } from "./claimed-identity";
+import {
+  evaluateDecision,
+  isDecisionSummary,
+  type DecisionSummary
+} from "./decision-policy";
 import {
   combineFrameStructuralSummaries,
   isFrameStructuralSummary,
@@ -17,6 +31,7 @@ import {
 } from "./navigation-analysis";
 import { toDisplayOrigin, type DisplayOrigin } from "./origin";
 import { analyzeUrl, type UrlAnalysis } from "./url-analysis";
+import { isResolverStatus, type ResolverStatus } from "./identity-resolver";
 
 const frameInjections = new Map<string, Promise<void>>();
 
@@ -42,7 +57,10 @@ async function ensureContentScript(tabId: number, frameId: number) {
 async function inspectFrameValue<T>(
   tabId: number,
   frameId: number,
-  type: "originlens.inspect-identity" | "originlens.inspect-structure",
+  type:
+    | "originlens.inspect-behavior"
+    | "originlens.inspect-identity"
+    | "originlens.inspect-structure",
   validate: (value: unknown) => value is T
 ): Promise<T | undefined> {
   const request = async () => {
@@ -119,6 +137,18 @@ async function inspectFrame(
   );
 }
 
+async function inspectFrameBehavior(
+  tabId: number,
+  frameId: number
+): Promise<FrameBehaviorSummary | undefined> {
+  return inspectFrameValue(
+    tabId,
+    frameId,
+    "originlens.inspect-behavior",
+    isFrameBehaviorSummary
+  );
+}
+
 async function inspectIdentity(
   tabId: number
 ): Promise<PageIdentitySummary | undefined> {
@@ -162,6 +192,58 @@ export async function getStructuralSummaryForTab(
   });
 }
 
+export async function getBehaviorSummaryForTab(
+  tabId: number | undefined
+): Promise<BehaviorSummary | undefined> {
+  if (typeof tabId !== "number") return undefined;
+  try {
+    const stored: unknown = await browser.runtime.sendMessage({
+      type: "originlens.get-behavior-summary",
+      tabId
+    });
+    if (isBehaviorSummary(stored)) return stored;
+  } catch {
+    /* Fall back to direct bounded frame inspection. */
+  }
+
+  let frameIds = [0];
+  try {
+    const frames = await browser.webNavigation.getAllFrames({ tabId });
+    if (!frames) return undefined;
+    const topFrame = frames.find((frame) => frame.frameId === 0);
+    if (!topFrame || !/^https?:/.test(topFrame.url)) return undefined;
+    frameIds = [...new Set(frames.map((frame) => frame.frameId))];
+  } catch {
+    /* Top-frame fallback below preserves bounded inspection. */
+  }
+
+  const inspected = await Promise.all(
+    frameIds
+      .slice(0, BEHAVIOR_FRAME_LIMIT)
+      .map((frameId) => inspectFrameBehavior(tabId, frameId))
+  );
+  const summaries = inspected.filter(
+    (summary): summary is FrameBehaviorSummary => summary !== undefined
+  );
+  return summaries.length > 0
+    ? combineFrameBehaviorSummaries(summaries)
+    : undefined;
+}
+
+export async function getCurrentBehaviorSummary(): Promise<
+  BehaviorSummary | undefined
+> {
+  try {
+    const [tab] = await browser.tabs.query({
+      active: true,
+      currentWindow: true
+    });
+    return getBehaviorSummaryForTab(tab?.id);
+  } catch {
+    return undefined;
+  }
+}
+
 export async function getNavigationSummaryForTab(
   tabId: number | undefined
 ): Promise<NavigationSummary | undefined> {
@@ -182,11 +264,58 @@ export async function getIdentityAssessmentForTab(
 ): Promise<IdentityAssessment | undefined> {
   if (typeof tabId !== "number") return undefined;
   try {
+    const stored: unknown = await browser.runtime.sendMessage({
+      type: "originlens.get-identity-assessment",
+      tabId
+    });
+    if (isIdentityAssessment(stored)) return stored;
     const [summary, tab] = await Promise.all([
       inspectIdentity(tabId),
       browser.tabs.get(tabId)
     ]);
     return summary ? compareClaimToUrl(summary, tab.url) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function getDecisionSummaryForTab(
+  tabId: number | undefined
+): Promise<DecisionSummary | undefined> {
+  if (typeof tabId !== "number") return undefined;
+  try {
+    const stored: unknown = await browser.runtime.sendMessage({
+      type: "originlens.get-decision-summary",
+      tabId
+    });
+    if (isDecisionSummary(stored)) return stored;
+
+    const [tab, identity, structural, behavior] = await Promise.all([
+      browser.tabs.get(tabId),
+      getIdentityAssessmentForTab(tabId),
+      getStructuralSummaryForTab(tabId),
+      getBehaviorSummaryForTab(tabId)
+    ]);
+    return evaluateDecision({
+      identity,
+      structural,
+      behavior,
+      url: analyzeUrl(tab.url)
+    });
+  } catch {
+    return undefined;
+  }
+}
+
+export async function getCurrentDecisionSummary(): Promise<
+  DecisionSummary | undefined
+> {
+  try {
+    const [tab] = await browser.tabs.query({
+      active: true,
+      currentWindow: true
+    });
+    return getDecisionSummaryForTab(tab?.id);
   } catch {
     return undefined;
   }
@@ -215,6 +344,17 @@ export async function getCurrentNavigationSummary(): Promise<
       currentWindow: true
     });
     return getNavigationSummaryForTab(tab?.id);
+  } catch {
+    return undefined;
+  }
+}
+
+export async function getResolverStatus(): Promise<ResolverStatus | undefined> {
+  try {
+    const status: unknown = await browser.runtime.sendMessage({
+      type: "originlens.get-resolver-status"
+    });
+    return isResolverStatus(status) ? status : undefined;
   } catch {
     return undefined;
   }

@@ -34,17 +34,20 @@ inaccessible frames. Unknown visibility must remain unknown, not benign.
 Compromised browsers, operating systems, and extension signing infrastructure
 are outside the extension's enforcement boundary.
 
-## Stage 3 attack surface
+## Release-candidate attack surface
 
 Stage 2 injects a bundled isolated-world script into HTTP(S) pages. The script
 considers the DOM hostile and exposes a schema-validated structural response
 only over Chrome's private extension tab-message channel. It never reads field
-values and has no input, keyboard, clipboard, or page-message bridge. A page
-cannot call the extension channel because OriginLens exposes no external
-messaging endpoint.
+values and has no clipboard, downloads, permission, or page-message bridge. The
+decision layer adds capture-phase focus, `beforeinput`, and submit guards only
+while a validated danger decision is active. They inspect event type and target
+structure, never input data. A page cannot call the extension channel because
+OriginLens exposes no external messaging endpoint.
 
 Closed shadow roots and inaccessible frames are not evidence of benignness. They
-remain unobserved and must become `unknown` in later policy stages.
+remain unobserved; partial coverage produces `unknown` unless the three positive
+danger facts are already established.
 
 Stage 3 additionally reads bounded text from selected top-frame title, heading,
 metadata, favicon, accessible-image, high-salience, footer/legal, and
@@ -55,5 +58,32 @@ claim when password or OTP structure is present.
 
 The bundled positive registry is not a malicious-domain list and is not assumed
 complete. Each relationship has provenance and a re-verification date. Unknown
-organizations and domains remain unverified; a strong mismatch is an observed
-fact, not a Stage 3 warning or blocking decision.
+organizations and domains remain unverified. The release candidate produces
+danger only from the conjunction of one strong registry claim, sensitive-data
+intent, and a verified-domain mismatch.
+
+The page warning is extension-created DOM, not a browser-owned interstitial. It
+uses an isolated shadow tree, native top-layer modal behavior, reinsertion, and
+capture guards, but a hostile page can still attempt removal or race the content
+script. A deliberate bypass is transient for the current navigation and never
+changes the danger decision. Badge, popup, and diagnostics remain independently
+inspectable if page intervention is disrupted.
+
+Behavior tracking observes only bounded DOM/event facts. Page code can hide
+identity in canvas/closed roots, construct exfiltration outside forms, or race
+mutation delivery. These cases do not become benign. OriginLens never sees
+request bodies, clipboard contents, permission outcomes, or managed downloads.
+
+The optional resolver adds response poisoning, replay, endpoint compromise,
+traffic analysis, and availability threats. It is disabled by default, sends no
+visited location, pins an Ed25519 public key/key ID, binds signed payloads to
+the exact normalized request, enforces expiry/size/count schemas, compares
+locally, and rate limits/cache-bounds requests. Failure or invalid data restores
+the bundled local assessment; a response cannot create danger, only a signed
+positive relationship that suppresses a mismatch.
+
+Persistent storage contains only user-entered resolver configuration. A local
+malicious extension or compromised browser profile remains outside the trust
+boundary. Release threats are reduced with local-only CSP, locked dependencies,
+SBOM generation, deterministic packaging, checksum publication, private
+vulnerability reporting, and manual review; they are not eliminated.

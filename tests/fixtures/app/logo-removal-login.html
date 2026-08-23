@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Identity removal mutation fixture</title>
+  </head>
+  <body>
+    <header id="brand"><img alt="Example organization logo" /></header>
+    <main>
+      <h1>Mutation fixture</h1>
+      <button id="change" type="button">Open changed login</button>
+      <div id="target"></div>
+    </main>
+    <script>
+      document.querySelector("#change").addEventListener("click", () => {
+        document.querySelector("#brand").remove();
+        document.querySelector("#target").innerHTML =
+          '<form><label>Password <input type="password"></label><button type="button">Continue</button></form>';
+      });
+    </script>
+  </body>
+</html>

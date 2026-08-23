@@ -6,7 +6,7 @@ OriginLens is an open-source, privacy-first Chrome extension being built to
 detect phishing from identity claims, sensitive-data intent, verified domain
 relationships, and page behavior—not malicious-URL blocklists.
 
-## Current status: Stage 3 claimed identity
+## Current status: release candidate awaiting manual acceptance
 
 The current build is a loadable Manifest V3 extension with early local signals.
 It provides:
@@ -25,12 +25,28 @@ It provides:
 - deterministic canonical, official-login, legacy-redirect, parent-domain, and
   strong-mismatch facts with article, comparison, documentation, customer-logo,
   payment, and OAuth/SSO context handling;
-- an event-driven service worker, no telemetry, analytics, or network endpoints.
+- an explicit danger policy requiring a strong identity claim, value-blind
+  sensitive-data intent, and a provenance-backed domain mismatch;
+- per-tab danger, caution, and unknown badges with accessible toolbar titles;
+- an accessible pre-entry warning and deliberate per-navigation bypass that does
+  not weaken the danger verdict;
+- bounded delayed/click insertion, SPA, action-mutation, destination, download-
+  click, permission-control, identity-removal, and canvas-visibility evidence;
+- warning-start fixtures for delayed, click-triggered, Latvian, and Russian
+  synthetic bank impersonation;
+- a disabled-by-default self-hosted resolver with minimized requests,
+  Ed25519-signed expiring provenance, local comparison, cache/rate limits, and
+  local fallback;
+- sanitized diagnostics export, explicit CSP, production SBOM, performance
+  budgets, and reproducible release-candidate packaging;
+- an event-driven service worker with no telemetry or analytics.
 
-OriginLens does **not** resolve organizations outside its bundled registry,
-issue phishing warnings, or block entry yet. Identity/domain results are
-inspectable facts, not a verdict. See [ROADMAP.md](ROADMAP.md) for planned work;
-roadmap items are not implemented features.
+OriginLens does **not** package local ML: the measured gaps do not yet have a
+representative, licensed, temporally and site-family-separated corpus that could
+support honest evaluation. Caution and unknown do not interrupt browsing, and
+danger requires all three explicit gates rather than a score. The optional
+resolver is positive identity enrichment, not a malicious-domain reputation
+service.
 
 > **Important:** OriginLens cannot prove that a website is safe. It does not
 > replace Chrome's built-in protections or phishing-resistant authentication
@@ -38,14 +54,18 @@ roadmap items are not implemented features.
 
 ## Privacy baseline
 
-Stage 3 has a bundled isolated-world content script on HTTP(S) pages and
-eligible child frames. It counts bounded field/form structure and matches
-bounded top-frame identity surfaces locally against known aliases. It never
-accesses field values or registers input/keylogging handlers. Only registry IDs,
-counts, confidence, contexts, and evidence codes cross the content boundary; raw
-page text does not. It has no persistent storage, analytics, or application
-network calls. Current-navigation evidence retains at most eight origins in
-transient service-worker memory and discards paths and queries.
+The release candidate has a bundled isolated-world content script on HTTP(S)
+pages and eligible child frames. It counts bounded field/form structure and
+matches bounded top-frame identity surfaces locally against known aliases. It
+never accesses field values. Capture-phase focus, input, and submit guards
+inspect only target element structure and event type when a danger decision is
+already active. Only registry IDs, counts, confidence, contexts, decision
+booleans, and evidence codes cross the content boundary; raw page text does not.
+Local storage contains only optional resolver configuration. Network access
+occurs only when that resolver is explicitly configured and enabled; its request
+excludes visited location and page content. Current-navigation evidence,
+resolver results/caches, and bypass state are transient and discard paths and
+queries.
 
 Future stages must never read, retain, log, hash, or transmit values entered in
 password, OTP, payment-card, recovery, seed-phrase, private-key, or other
@@ -90,9 +110,10 @@ pnpm deploy:test-download
 ```
 
 This creates an integrity-checkable ZIP and serves it only at
-`https://fixtures.example.invalid/originlens-stage-3.zip`. Chrome does not install
-self-hosted extension ZIPs directly: extract the archive, then select its
-`chrome-mv3` directory with **Load unpacked** in `chrome://extensions`.
+`https://fixtures.example.invalid/originlens-release-candidate.zip`. Chrome does
+not install self-hosted extension ZIPs directly: extract the archive, then
+select its `chrome-mv3` directory with **Load unpacked** in
+`chrome://extensions`.
 
 The deployment command requires local `sudo` because it installs an Nginx vhost
 and reloads the server. See [deployment notes](docs/DEPLOYMENT.md).
@@ -105,7 +126,9 @@ pnpm format:check
 pnpm typecheck
 pnpm test
 pnpm build
+pnpm performance:check
 pnpm test:e2e
+pnpm verify:reproducible
 ```
 
 The nondestructive live-bank regression is separately opt-in:

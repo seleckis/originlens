@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Canvas identity visibility limit</title>
+  </head>
+  <body>
+    <main>
+      <h1>Canvas-rendered identity fixture</h1>
+      <canvas id="identity" width="360" height="60"></canvas>
+      <form>
+        <label>Password <input type="password" /></label>
+        <button type="button">Continue</button>
+      </form>
+    </main>
+    <script>
+      const context = document.querySelector("#identity").getContext("2d");
+      context.font = "28px sans-serif";
+      context.fillText("Example identity rendered only in canvas", 8, 38);
+    </script>
+  </body>
+</html>

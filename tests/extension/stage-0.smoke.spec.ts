@@ -6,6 +6,8 @@ import {
   type Page,
   type Worker
 } from "@playwright/test";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { generateKeyPairSync, sign } from "node:crypto";
 import {
   createServer,
   type IncomingMessage,
@@ -13,12 +15,24 @@ import {
   type ServerResponse
 } from "node:http";
 import { resolve } from "node:path";
+import { canonicalJson } from "../../lib/identity-resolver";
 
 const extensionPath = resolve(".output/chrome-mv3");
+const hostedFixturePath = resolve("tests/fixtures/app");
+const hostedFixtureNames = readdirSync(hostedFixturePath)
+  .filter((name) => /^[a-z0-9-]+\.html$/.test(name))
+  .sort();
 
 let context: BrowserContext;
 let fixtureServer: Server;
 let crossOriginFixtureServer: Server;
+let resolverServer: Server;
+const resolverRequests: unknown[] = [];
+const resolverKeyId = "playwright-resolver-key";
+const resolverKeys = generateKeyPairSync("ed25519");
+const resolverPublicKey = (
+  resolverKeys.publicKey.export({ format: "jwk" }) as JsonWebKey
+).x!;
 
 const pages: Record<string, string> = {
   "/": '<!doctype html><form><input type="email" autocomplete="username"><input type="password" value="fake-secret-never-captured"><button type="submit">Sign in</button></form>',
@@ -48,7 +62,9 @@ const pages: Record<string, string> = {
     <header>Swedbank</header><h1>Sign in to Swedbank</h1>
     <form><input autocomplete="username"><input type="password" value="fake-identity-secret-never-captured"><button type="button">Sign in</button></form>`,
   "/verified-swedbank":
-    "<!doctype html><title>Swedbank Latvia</title><header>Swedbank</header><h1>Internet banking</h1>",
+    '<!doctype html><title>Swedbank Latvia</title><header>Swedbank</header><h1>Internet banking</h1><form><input autocomplete="username"><input type="password"><button type="button">Sign in</button></form>',
+  "/unknown-brand-login":
+    '<!doctype html><title>Example Credit Union login</title><h1>Example Credit Union</h1><form><input autocomplete="username"><input type="password"><button type="button">Sign in</button></form>',
   "/bank-article":
     '<!doctype html><title>News: Swedbank quarterly results</title><meta property="og:type" content="article"><article><h1>Swedbank quarterly results</h1></article>',
   "/bank-comparison":
@@ -93,6 +109,40 @@ async function storedStructuralSummary(
     : undefined;
 }
 
+async function storedDecisionSummary(
+  extensionPage: Page,
+  tabId: number
+): Promise<Record<string, unknown> | undefined> {
+  const result: unknown = await extensionPage.evaluate(
+    (id) =>
+      chrome.runtime.sendMessage({
+        type: "originlens.get-decision-summary",
+        tabId: id
+      }),
+    tabId
+  );
+  return result && typeof result === "object"
+    ? (result as Record<string, unknown>)
+    : undefined;
+}
+
+async function storedBehaviorSummary(
+  extensionPage: Page,
+  tabId: number
+): Promise<Record<string, unknown> | undefined> {
+  const result: unknown = await extensionPage.evaluate(
+    (id) =>
+      chrome.runtime.sendMessage({
+        type: "originlens.get-behavior-summary",
+        tabId: id
+      }),
+    tabId
+  );
+  return result && typeof result === "object"
+    ? (result as Record<string, unknown>)
+    : undefined;
+}
+
 async function openDiagnostics(
   extensionId: string,
   tabId: number
@@ -105,6 +155,13 @@ async function openDiagnostics(
 }
 
 test.beforeAll(async () => {
+  const fixtureHtml = (name: string | undefined): string | undefined => {
+    if (!name || !/^[a-z0-9-]+\.html$/.test(name)) return undefined;
+    const fixturePath = resolve(hostedFixturePath, name);
+    return existsSync(fixturePath)
+      ? readFileSync(fixturePath, "utf8")
+      : undefined;
+  };
   const respond = (request: IncomingMessage, response: ServerResponse) => {
     const url = new URL(request.url ?? "/", "http://fixture.local");
     if (url.pathname === "/redirect") {
@@ -114,7 +171,16 @@ test.beforeAll(async () => {
       response.end();
       return;
     }
-    const html = pages[url.pathname];
+    const hostedName = url.pathname.startsWith("/hosted/")
+      ? url.pathname.slice("/hosted/".length)
+      : undefined;
+    const rootName = url.pathname.startsWith("/")
+      ? url.pathname.slice(1)
+      : undefined;
+    const html =
+      (hostedName ? fixtureHtml(hostedName) : undefined) ??
+      pages[url.pathname] ??
+      fixtureHtml(rootName);
     response.writeHead(html ? 200 : 404, {
       "Content-Type": "text/html; charset=utf-8"
     });
@@ -122,11 +188,70 @@ test.beforeAll(async () => {
   };
   fixtureServer = createServer(respond);
   crossOriginFixtureServer = createServer(respond);
+  resolverServer = createServer((request, response) => {
+    if (request.method === "OPTIONS") {
+      response.writeHead(204, {
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Origin": "*"
+      });
+      response.end();
+      return;
+    }
+    if (request.method !== "POST" || request.url !== "/v1/resolve") {
+      response.writeHead(404).end();
+      return;
+    }
+    const chunks: Buffer[] = [];
+    request.on("data", (chunk: Buffer) => chunks.push(chunk));
+    request.on("end", () => {
+      const resolverRequest = JSON.parse(
+        Buffer.concat(chunks).toString("utf8")
+      ) as { version: 1; organization: string; locale: string };
+      resolverRequests.push(resolverRequest);
+      const now = new Date();
+      const payload = {
+        version: 1 as const,
+        organization: resolverRequest.organization,
+        locale: resolverRequest.locale,
+        candidates: [
+          {
+            domain: "example.test",
+            confidence: 0.99,
+            provenance: [
+              {
+                sourceUrl: "https://fixture.example.test/domain-guidance",
+                evidenceType: "official-domain-guidance",
+                verifiedAt: now.toISOString().slice(0, 10),
+                reviewer: "Playwright fixture"
+              }
+            ]
+          }
+        ],
+        issuedAt: now.toISOString(),
+        expiresAt: new Date(now.getTime() + 60_000).toISOString(),
+        keyId: resolverKeyId
+      };
+      const signature = sign(
+        null,
+        Buffer.from(canonicalJson(payload)),
+        resolverKeys.privateKey
+      ).toString("base64url");
+      response.writeHead(200, {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json"
+      });
+      response.end(JSON.stringify({ payload, signature }));
+    });
+  });
   await new Promise<void>((resolveServer) =>
     fixtureServer.listen(4174, "127.0.0.1", resolveServer)
   );
   await new Promise<void>((resolveServer) =>
     crossOriginFixtureServer.listen(4175, "127.0.0.1", resolveServer)
+  );
+  await new Promise<void>((resolveServer) =>
+    resolverServer.listen(4176, "127.0.0.1", resolveServer)
   );
   context = await chromium.launchPersistentContext("", {
     channel: "chromium",
@@ -148,6 +273,11 @@ test.afterAll(async () => {
   );
   await new Promise<void>((resolveServer, rejectServer) =>
     crossOriginFixtureServer.close((error) =>
+      error ? rejectServer(error) : resolveServer()
+    )
+  );
+  await new Promise<void>((resolveServer, rejectServer) =>
+    resolverServer.close((error) =>
       error ? rejectServer(error) : resolveServer()
     )
   );
@@ -283,7 +413,9 @@ test("reports a bounded strong identity mismatch without exposing page text", as
   await expect(
     diagnostics.getByText("Swedbank Latvia", { exact: true })
   ).toBeVisible();
-  await expect(diagnostics.getByText("strong identity claim")).toBeVisible();
+  await expect(
+    diagnostics.getByText("strong identity claim", { exact: true })
+  ).toBeVisible();
   await expect(
     diagnostics.getByText("mismatch", { exact: true })
   ).toBeVisible();
@@ -297,6 +429,151 @@ test("reports a bounded strong identity mismatch without exposing page text", as
 
   await inspected.close();
   await diagnostics.close();
+});
+
+test("warns accessibly before sensitive entry and keeps danger after bypass", async () => {
+  const worker = await extensionWorker();
+  const extensionId = new URL(worker.url()).host;
+  const extensionPage = await context.newPage();
+  await extensionPage.goto(`chrome-extension://${extensionId}/options.html`);
+  const inspected = await context.newPage();
+  await inspected.goto("http://fixture.example.test:4174/identity-mismatch");
+  const tabId = await tabIdFor(worker, "http://fixture.example.test:4174/*");
+
+  const warning = inspected.getByRole("alertdialog");
+  await expect(warning).toBeVisible();
+  await expect(
+    inspected.getByRole("heading", { name: "Possible phishing page" })
+  ).toBeVisible();
+  await expect(
+    inspected.getByText(/actual registrable domain is example\.test/)
+  ).toBeVisible();
+  await inspected
+    .locator("#originlens-high-confidence-warning")
+    .evaluate((element) => element.remove());
+  await expect(inspected.getByRole("alertdialog")).toBeVisible();
+  const leave = inspected.getByRole("button", { name: "Leave this page" });
+  const continueButton = inspected.getByRole("button", {
+    name: "Continue anyway"
+  });
+  await expect(leave).toBeFocused();
+  await inspected.keyboard.press("Tab");
+  await expect(continueButton).toBeFocused();
+  await inspected.keyboard.press("Shift+Tab");
+  await expect(leave).toBeFocused();
+
+  await expect
+    .poll(() => storedDecisionSummary(extensionPage, tabId))
+    .toMatchObject({
+      state: "danger",
+      intervention: "required",
+      gates: {
+        strongIdentityClaim: true,
+        sensitiveDataIntent: true,
+        verifiedDomainMismatch: true
+      }
+    });
+  await expect
+    .poll(() =>
+      worker.evaluate((id) => chrome.action.getBadgeText({ tabId: id }), tabId)
+    )
+    .toBe("!");
+  await expect
+    .poll(() =>
+      worker.evaluate((id) => chrome.action.getTitle({ tabId: id }), tabId)
+    )
+    .toContain("danger");
+
+  await continueButton.click();
+  await expect(warning).toHaveCount(0);
+  await expect
+    .poll(() => storedDecisionSummary(extensionPage, tabId))
+    .toMatchObject({ state: "danger", intervention: "bypassed" });
+  await inspected
+    .locator('input[type="password"]')
+    .fill("fake-stage-4-bypass-secret");
+  const diagnostics = await openDiagnostics(extensionId, tabId);
+  await expect(diagnostics.getByText("Danger", { exact: true })).toBeVisible();
+  expect(await diagnostics.locator("body").innerText()).not.toContain(
+    "fake-stage-4-bypass-secret"
+  );
+  const [download] = await Promise.all([
+    diagnostics.waitForEvent("download"),
+    diagnostics
+      .getByRole("button", { name: "Download sanitized diagnostics" })
+      .click()
+  ]);
+  const downloadPath = await download.path();
+  expect(download.suggestedFilename()).toBe(
+    "originlens-sanitized-diagnostics.json"
+  );
+  const exported = readFileSync(downloadPath, "utf8");
+  expect(exported).not.toContain("example.test");
+  expect(exported).not.toContain("fake-stage-4-bypass-secret");
+
+  await inspected.reload();
+  await expect(inspected.getByRole("alertdialog")).toBeVisible();
+  await expect
+    .poll(() => storedDecisionSummary(extensionPage, tabId))
+    .toMatchObject({ state: "danger", intervention: "required" });
+
+  await diagnostics.close();
+  await inspected.close();
+  await extensionPage.close();
+});
+
+test("does not warn for verified-bank or unknown-brand sensitive forms", async () => {
+  const worker = await extensionWorker();
+  const extensionId = new URL(worker.url()).host;
+  const extensionPage = await context.newPage();
+  await extensionPage.goto(`chrome-extension://${extensionId}/options.html`);
+
+  const verified = await context.newPage();
+  await verified.goto("http://www.swedbank.lv:4174/verified-swedbank");
+  const verifiedTabId = await tabIdFor(worker, "http://www.swedbank.lv:4174/*");
+  await expect
+    .poll(() => storedDecisionSummary(extensionPage, verifiedTabId))
+    .toMatchObject({
+      state: "caution",
+      intervention: "not-required",
+      gates: {
+        strongIdentityClaim: true,
+        sensitiveDataIntent: true,
+        verifiedDomainMismatch: false
+      }
+    });
+  await expect(verified.getByRole("alertdialog")).toHaveCount(0);
+  await expect
+    .poll(() =>
+      worker.evaluate(
+        (id) => chrome.action.getTitle({ tabId: id }),
+        verifiedTabId
+      )
+    )
+    .toContain("caution");
+  await verified.close();
+
+  const unknown = await context.newPage();
+  await unknown.goto("http://fixture.example.test:4174/unknown-brand-login");
+  const unknownTabId = await tabIdFor(
+    worker,
+    "http://fixture.example.test:4174/*"
+  );
+  await expect
+    .poll(() => storedDecisionSummary(extensionPage, unknownTabId))
+    .toMatchObject({
+      state: "caution",
+      intervention: "not-required",
+      gates: {
+        strongIdentityClaim: false,
+        sensitiveDataIntent: true,
+        verifiedDomainMismatch: false
+      }
+    });
+  await expect(unknown.getByRole("alertdialog")).toHaveCount(0);
+
+  await unknown.close();
+  await extensionPage.close();
 });
 
 test("verifies a synthetic page on a provenance-backed domain", async () => {
@@ -350,7 +627,405 @@ test("keeps article, comparison, payment, and OAuth contexts non-mismatching", a
   }
 });
 
-test("loads Stage 3 locally without remote requests or security claims", async () => {
+test("starts warning when a strong-identity login is inserted after a delay", async () => {
+  const worker = await extensionWorker();
+  const extensionId = new URL(worker.url()).host;
+  const extensionPage = await context.newPage();
+  await extensionPage.goto(`chrome-extension://${extensionId}/options.html`);
+  const inspected = await context.newPage();
+  await inspected.goto(
+    "http://fixture.example.test:4174/hosted/harmful-delayed-login.html"
+  );
+  const tabId = await tabIdFor(worker, "http://fixture.example.test:4174/*");
+
+  await expect(inspected.getByText("Preparing login…")).toBeVisible();
+  await expect(inspected.getByRole("alertdialog")).toHaveCount(0);
+  await expect(inspected.getByRole("alertdialog")).toBeVisible();
+  await expect
+    .poll(() => storedBehaviorSummary(extensionPage, tabId))
+    .toMatchObject({
+      delayedSensitiveInsertions: 1,
+      evidence: expect.arrayContaining(["BEHAVIOR.DELAYED_SENSITIVE_INSERTION"])
+    });
+  await expect
+    .poll(() => storedDecisionSummary(extensionPage, tabId))
+    .toMatchObject({ state: "danger", intervention: "required" });
+
+  await inspected.close();
+  await extensionPage.close();
+});
+
+test("starts warning when a click reveals a strong-identity login", async () => {
+  const worker = await extensionWorker();
+  const extensionId = new URL(worker.url()).host;
+  const extensionPage = await context.newPage();
+  await extensionPage.goto(`chrome-extension://${extensionId}/options.html`);
+  const inspected = await context.newPage();
+  await inspected.goto(
+    "http://fixture.example.test:4174/hosted/harmful-click-login.html"
+  );
+  const tabId = await tabIdFor(worker, "http://fixture.example.test:4174/*");
+
+  await expect(inspected.getByRole("alertdialog")).toHaveCount(0);
+  await inspected.getByRole("button", { name: "Continue to login" }).click();
+  await expect(inspected.getByRole("alertdialog")).toBeVisible();
+  await expect
+    .poll(() => storedBehaviorSummary(extensionPage, tabId))
+    .toMatchObject({
+      clickTriggeredSensitiveInsertions: 1,
+      evidence: expect.arrayContaining([
+        "BEHAVIOR.CLICK_TRIGGERED_SENSITIVE_INSERTION"
+      ])
+    });
+
+  await inspected.close();
+  await extensionPage.close();
+});
+
+test("warns on Latvian and Russian synthetic impersonation but not articles", async () => {
+  const worker = await extensionWorker();
+  const extensionPage = await context.newPage();
+  const extensionId = new URL(worker.url()).host;
+  await extensionPage.goto(`chrome-extension://${extensionId}/options.html`);
+
+  for (const fixtureName of [
+    "harmful-latvian-login.html",
+    "harmful-russian-login.html"
+  ]) {
+    const startedAt = Date.now();
+    const inspected = await context.newPage();
+    await inspected.goto(
+      `http://fixture.example.test:4174/hosted/${fixtureName}`
+    );
+    await expect(inspected.getByRole("alertdialog")).toBeVisible();
+    expect(Date.now() - startedAt).toBeLessThan(2_500);
+    await inspected.close();
+  }
+
+  for (const fixtureName of [
+    "benign-latvian-bank-article.html",
+    "benign-russian-comparison.html"
+  ]) {
+    const inspected = await context.newPage();
+    await inspected.goto(
+      `http://fixture.example.test:4174/hosted/${fixtureName}`
+    );
+    await expect(inspected.getByRole("alertdialog")).toHaveCount(0);
+    const tabId = await tabIdFor(worker, "http://fixture.example.test:4174/*");
+    await expect
+      .poll(() => storedDecisionSummary(extensionPage, tabId))
+      .not.toMatchObject({ state: "danger" });
+    await inspected.close();
+  }
+
+  await extensionPage.close();
+});
+
+test("keeps danger after bypass while observing action mutation destinations", async () => {
+  const worker = await extensionWorker();
+  const extensionId = new URL(worker.url()).host;
+  const extensionPage = await context.newPage();
+  await extensionPage.goto(`chrome-extension://${extensionId}/options.html`);
+  const inspected = await context.newPage();
+  await inspected.goto(
+    "http://fixture.example.test:4174/hosted/harmful-action-mutation.html"
+  );
+  const tabId = await tabIdFor(worker, "http://fixture.example.test:4174/*");
+
+  await expect(inspected.getByRole("alertdialog")).toBeVisible();
+  await inspected.getByRole("button", { name: "Continue anyway" }).click();
+  await inspected.getByRole("button", { name: "Change destination" }).click();
+  await expect
+    .poll(() => storedBehaviorSummary(extensionPage, tabId))
+    .toMatchObject({
+      actionMutations: 1,
+      crossOriginSensitiveActions: 1,
+      rawIpSensitiveActions: 1,
+      evidence: expect.arrayContaining([
+        "BEHAVIOR.ACTION_MUTATION",
+        "BEHAVIOR.CROSS_ORIGIN_SENSITIVE_ACTION",
+        "BEHAVIOR.RAW_IP_SENSITIVE_ACTION"
+      ])
+    });
+  await expect
+    .poll(() => storedDecisionSummary(extensionPage, tabId))
+    .toMatchObject({ state: "danger", intervention: "bypassed" });
+
+  await inspected.close();
+  await extensionPage.close();
+});
+
+test("marks canvas-only identity visibility as partial without warning", async () => {
+  const worker = await extensionWorker();
+  const extensionId = new URL(worker.url()).host;
+  const extensionPage = await context.newPage();
+  await extensionPage.goto(`chrome-extension://${extensionId}/options.html`);
+  const inspected = await context.newPage();
+  await inspected.goto(
+    "http://fixture.example.test:4174/hosted/canvas-identity-login.html"
+  );
+  const tabId = await tabIdFor(worker, "http://fixture.example.test:4174/*");
+
+  await expect(inspected.getByRole("alertdialog")).toHaveCount(0);
+  await expect
+    .poll(() => storedBehaviorSummary(extensionPage, tabId))
+    .toMatchObject({
+      canvasElements: 1,
+      coverage: "partial",
+      evidence: expect.arrayContaining(["BEHAVIOR.CANVAS_TEXT_UNOBSERVABLE"])
+    });
+
+  await inspected.close();
+  await extensionPage.close();
+});
+
+test("observes logo removal and executable-style download controls", async () => {
+  const worker = await extensionWorker();
+  const extensionId = new URL(worker.url()).host;
+  const extensionPage = await context.newPage();
+  await extensionPage.goto(`chrome-extension://${extensionId}/options.html`);
+
+  const removal = await context.newPage();
+  await removal.goto(
+    "http://fixture.example.test:4174/hosted/logo-removal-login.html"
+  );
+  const removalTabId = await tabIdFor(
+    worker,
+    "http://fixture.example.test:4174/*"
+  );
+  await removal.getByRole("button", { name: "Open changed login" }).click();
+  await expect
+    .poll(() => storedBehaviorSummary(extensionPage, removalTabId))
+    .toMatchObject({
+      identitySurfaceRemovals: 1,
+      clickTriggeredSensitiveInsertions: 1,
+      evidence: expect.arrayContaining([
+        "BEHAVIOR.IDENTITY_SURFACE_REMOVAL",
+        "BEHAVIOR.CLICK_TRIGGERED_SENSITIVE_INSERTION"
+      ])
+    });
+  await removal.close();
+
+  const controls = await context.newPage();
+  await controls.goto(
+    "http://fixture.example.test:4174/hosted/permission-download-controls.html"
+  );
+  const controlsTabId = await tabIdFor(
+    worker,
+    "http://fixture.example.test:4174/*"
+  );
+  await expect
+    .poll(() => storedBehaviorSummary(extensionPage, controlsTabId))
+    .toMatchObject({ permissionOrClipboardControls: 1 });
+  await controls.locator("#download-update").evaluate((anchor) => {
+    anchor.addEventListener("click", (event) => event.preventDefault(), {
+      once: true
+    });
+    (anchor as HTMLAnchorElement).click();
+  });
+  await expect
+    .poll(() => storedBehaviorSummary(extensionPage, controlsTabId))
+    .toMatchObject({
+      suspiciousDownloadClicks: 1,
+      evidence: expect.arrayContaining([
+        "BEHAVIOR.SUSPICIOUS_DOWNLOAD_CLICK",
+        "BEHAVIOR.PERMISSION_OR_CLIPBOARD_CONTROL"
+      ])
+    });
+  await controls.close();
+  await extensionPage.close();
+});
+
+test("verifies a signed resolver response without transmitting page location", async () => {
+  const worker = await extensionWorker();
+  const extensionId = new URL(worker.url()).host;
+  const extensionPage = await context.newPage();
+  await extensionPage.goto(`chrome-extension://${extensionId}/options.html`);
+  resolverRequests.length = 0;
+  const enabledConfig = {
+    version: 1,
+    enabled: true,
+    endpoint: "http://127.0.0.1:4176/v1/resolve",
+    publicKey: resolverPublicKey,
+    keyId: resolverKeyId,
+    locale: "en-LV"
+  } as const;
+  await expect(
+    extensionPage.evaluate(
+      (config) =>
+        chrome.runtime.sendMessage({
+          type: "originlens.set-resolver-config",
+          config
+        }),
+      enabledConfig
+    )
+  ).resolves.toMatchObject({ ok: true });
+  const inspected = await context.newPage();
+  await inspected.goto("http://fixture.example.test:4174/identity-mismatch");
+  const tabId = await tabIdFor(worker, "http://fixture.example.test:4174/*");
+  await expect
+    .poll(() =>
+      extensionPage.evaluate(() =>
+        chrome.runtime.sendMessage({ type: "originlens.get-resolver-status" })
+      )
+    )
+    .toMatchObject({
+      lastResult: {
+        status: "verified",
+        evidenceCode: "RESOLVER.SIGNED_RESPONSE",
+        candidateCount: 1
+      }
+    });
+  await expect
+    .poll(() =>
+      extensionPage.evaluate(
+        (id) =>
+          chrome.runtime.sendMessage({
+            type: "originlens.get-identity-assessment",
+            tabId: id
+          }),
+        tabId
+      )
+    )
+    .toMatchObject({
+      domainStatus: "verified",
+      registrableDomain: "example.test",
+      relationship: "resolver-candidate",
+      evidence: ["IDENTITY.DOMAIN.RESOLVER_CANDIDATE"]
+    });
+  await expect
+    .poll(() => storedDecisionSummary(extensionPage, tabId))
+    .toMatchObject({
+      state: "caution",
+      intervention: "not-required",
+      gates: { verifiedDomainMismatch: false }
+    });
+  await expect(inspected.getByRole("alertdialog")).toHaveCount(0);
+  expect(resolverRequests).toEqual([
+    { version: 1, organization: "Swedbank Latvia", locale: "en-LV" }
+  ]);
+  expect(JSON.stringify(resolverRequests)).not.toMatch(
+    /url|domain|path|query|html|text|screenshot|history/i
+  );
+
+  const diagnostics = await openDiagnostics(extensionId, tabId);
+  await expect(
+    diagnostics
+      .getByLabel("Outbound privacy audit")
+      .getByText("verified", { exact: true })
+  ).toBeVisible();
+  await expect(
+    diagnostics.getByText(/outbound page-derived fields organization, locale/)
+  ).toBeVisible();
+
+  await extensionPage.evaluate(
+    (config) =>
+      chrome.runtime.sendMessage({
+        type: "originlens.set-resolver-config",
+        config: { ...config, enabled: false }
+      }),
+    enabledConfig
+  );
+  await diagnostics.close();
+  await inspected.close();
+  await extensionPage.close();
+});
+
+test("falls back to the local warning when the optional resolver is offline", async () => {
+  const worker = await extensionWorker();
+  const extensionId = new URL(worker.url()).host;
+  const extensionPage = await context.newPage();
+  await extensionPage.goto(`chrome-extension://${extensionId}/options.html`);
+  const offlineConfig = {
+    version: 1,
+    enabled: true,
+    endpoint: "http://127.0.0.1:4199/v1/resolve",
+    publicKey: resolverPublicKey,
+    keyId: resolverKeyId,
+    locale: "en-LV"
+  } as const;
+  await extensionPage.evaluate(
+    (config) =>
+      chrome.runtime.sendMessage({
+        type: "originlens.set-resolver-config",
+        config
+      }),
+    offlineConfig
+  );
+
+  const inspected = await context.newPage();
+  await inspected.goto("http://fixture.example.test:4174/identity-mismatch");
+  const tabId = await tabIdFor(worker, "http://fixture.example.test:4174/*");
+  await expect
+    .poll(
+      () =>
+        extensionPage.evaluate(() =>
+          chrome.runtime.sendMessage({
+            type: "originlens.get-resolver-status"
+          })
+        ),
+      { timeout: 6_000 }
+    )
+    .toMatchObject({
+      lastResult: {
+        status: "unavailable",
+        evidenceCode: "RESOLVER.UNAVAILABLE"
+      }
+    });
+  await expect(inspected.getByRole("alertdialog")).toBeVisible();
+  await expect
+    .poll(() => storedDecisionSummary(extensionPage, tabId))
+    .toMatchObject({ state: "danger", intervention: "required" });
+
+  await expect(
+    extensionPage.evaluate(() =>
+      chrome.runtime.sendMessage({
+        type: "originlens.set-resolver-config",
+        config: {
+          version: 0,
+          enabled: true,
+          endpoint: "https://invalid.example/v1/resolve",
+          publicKey: "invalid",
+          keyId: "invalid",
+          locale: "en-LV"
+        }
+      })
+    )
+  ).resolves.toMatchObject({ ok: false });
+  await extensionPage.evaluate(
+    (config) =>
+      chrome.runtime.sendMessage({
+        type: "originlens.set-resolver-config",
+        config: { ...config, enabled: false }
+      }),
+    offlineConfig
+  );
+  await inspected.close();
+  await extensionPage.close();
+});
+
+test("loads every hosted fixture without page errors", async () => {
+  test.setTimeout(90_000);
+  const errors: string[] = [];
+
+  for (const fixtureName of hostedFixtureNames) {
+    const inspected = await context.newPage();
+    inspected.on("pageerror", (error) =>
+      errors.push(`${fixtureName}: ${error.message}`)
+    );
+    const response = await inspected.goto(
+      `http://fixture.example.test:4174/hosted/${fixtureName}`,
+      { waitUntil: "domcontentloaded" }
+    );
+    expect(response?.status(), fixtureName).toBe(200);
+    await expect(inspected.locator("body"), fixtureName).toBeAttached();
+    await inspected.close();
+  }
+
+  expect(errors).toEqual([]);
+});
+
+test("loads the release candidate without implicit remote requests or safety claims", async () => {
   const worker = await extensionWorker();
   const manifest = await worker.evaluate(() => chrome.runtime.getManifest());
   const contentScript = manifest.content_scripts?.[0] as
@@ -362,6 +1037,7 @@ test("loads Stage 3 locally without remote requests or security claims", async (
   expect(manifest.permissions).toEqual([
     "activeTab",
     "scripting",
+    "storage",
     "webNavigation"
   ]);
   expect(manifest.host_permissions).toEqual(["http://*/*", "https://*/*"]);
@@ -391,8 +1067,11 @@ test("loads Stage 3 locally without remote requests or security claims", async (
   await expect(
     page.getByRole("heading", { name: "Diagnostics" })
   ).toBeVisible();
-  await expect(page.getByText("No endpoints configured")).toBeVisible();
-  await expect(page.getByText("Disabled")).toBeVisible();
-  await expect(page.getByText("Bounded structure and identity")).toBeVisible();
+  await expect(
+    page.getByText("Disabled by default", { exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByText("Bounded structure, identity, and decision gates")
+  ).toBeVisible();
   await page.close();
 });

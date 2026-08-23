@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Permission and download control fixture</title>
+  </head>
+  <body>
+    <main>
+      <h1>Bounded control context</h1>
+      <button id="request-clipboard" aria-label="Request clipboard permission">
+        Clipboard test control
+      </button>
+      <a id="download-update" href="security-update.exe" download
+        >Download executable-style fixture</a
+      >
+      <p>
+        The controls do not call browser APIs or download a file. OriginLens
+        observes only bounded structural and click context.
+      </p>
+    </main>
+  </body>
+</html>

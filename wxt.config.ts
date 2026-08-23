@@ -5,10 +5,13 @@ export default defineConfig({
   manifest: {
     name: "OriginLens",
     description: "See who a site really is. Privacy-first phishing detection.",
-    permissions: ["activeTab", "scripting", "webNavigation"],
+    permissions: ["activeTab", "scripting", "storage", "webNavigation"],
     host_permissions: ["http://*/*", "https://*/*"],
     action: {
       default_title: "OriginLens — inspect this site"
+    },
+    content_security_policy: {
+      extension_pages: "script-src 'self'; object-src 'none'; base-uri 'none'"
     }
   }
 });

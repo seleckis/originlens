@@ -1,9 +1,9 @@
 # Test-download and fixture deployment
 
-Stage 3 has a deliberately narrow self-hosted test distribution. It serves the
-extension ZIP, its SHA-256 checksum, and a separate static fixture site for
-manual Chrome acceptance. It does not list directories or host extension source
-pages.
+The release candidate has a deliberately narrow self-hosted test distribution.
+It serves the extension ZIP, its SHA-256 checksum, and a separate static fixture
+site for manual Chrome acceptance. It does not list directories or host
+extension source pages.
 
 ## Deploy
 
@@ -16,21 +16,24 @@ pnpm deploy:test-download
 The command:
 
 1. builds the Chrome Manifest V3 production output;
-2. packages `.output/chrome-mv3` as `dist/originlens-stage-3.zip`;
-3. creates `dist/originlens-stage-3.zip.sha256`;
-4. installs both artifacts under `/var/www/originlens/releases`;
-5. installs `tests/fixtures/app` under `/var/www/originlens/fixtures`;
-6. installs and enables the Nginx vhost from
+2. generates `dist/SBOM.cdx.json`;
+3. reproducibly packages the extension and SBOM as
+   `dist/originlens-release-candidate.zip`;
+4. creates `dist/originlens-release-candidate.zip.sha256`;
+5. installs both artifacts under `/var/www/originlens/releases`;
+6. installs `tests/fixtures/app` under `/var/www/originlens/fixtures`;
+7. installs and enables the Nginx vhost from
    `deploy/nginx/fixtures.example.invalid.conf`;
-7. validates the complete Nginx configuration before reloading it.
+8. validates the complete Nginx configuration before reloading it.
 
 It requires local `sudo` for the system paths and reload. A failed `nginx -t`
 prevents the reload.
 
 ## Download and load
 
-- ZIP: `https://fixtures.example.invalid/originlens-stage-3.zip`
-- Checksum: `https://fixtures.example.invalid/originlens-stage-3.zip.sha256`
+- ZIP: `https://fixtures.example.invalid/originlens-release-candidate.zip`
+- Checksum:
+  `https://fixtures.example.invalid/originlens-release-candidate.zip.sha256`
 - Manual acceptance fixtures: `https://fixtures.example.invalid/fixtures/`
 
 Verify the SHA-256 file, extract the ZIP, open `chrome://extensions`, enable

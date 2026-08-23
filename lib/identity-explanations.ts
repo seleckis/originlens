@@ -30,7 +30,8 @@ const relationshipLabels: Record<DomainRelationship, string> = {
   canonical: "canonical domain",
   "legacy-redirect": "documented legacy redirect",
   "official-login": "official login domain",
-  "parent-organization": "documented parent organization"
+  "parent-organization": "documented parent organization",
+  "resolver-candidate": "signed resolver candidate"
 };
 
 export function identityOrganization(candidate: IdentityCandidate): string {
@@ -53,7 +54,7 @@ export function identityComparisonText(assessment: IdentityAssessment): string {
   if (assessment.domainStatus === "verified")
     return `${assessment.organization ?? "The organization"} is linked to ${domain} as a ${relationshipLabels[assessment.relationship ?? "canonical"]}.`;
   if (assessment.domainStatus === "mismatch")
-    return `${assessment.organization ?? "The organization"} is strongly claimed, but ${domain} is not in its verified domain relationships. Stage 3 reports this fact without warning or blocking.`;
+    return `${assessment.organization ?? "The organization"} is strongly claimed, but ${domain} is not in its verified domain relationships. This is one required danger gate and does not cause intervention without sensitive-data intent.`;
   if (assessment.summary.candidates.length > 1)
     return "Multiple registry organizations appear on this contextual page, so no identity/domain mismatch is applied.";
   if (assessment.candidate)
