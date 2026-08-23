@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title description">
+  <title id="title">OriginLens</title>
+  <desc id="description">A magnifying lens inside a protective shield.</desc>
+  <path fill="#183f35" stroke="#fffdf8" stroke-linejoin="round" stroke-width="4" d="M64 8 112 25v34c0 28-18 49-48 61-30-12-48-33-48-61V25L64 8Z"/>
+  <circle cx="53" cy="52" r="24" fill="none" stroke="#fffdf8" stroke-width="10"/>
+  <path fill="none" stroke="#e49a40" stroke-linecap="round" stroke-width="11" d="m70 70 20 20"/>
+  <circle cx="93" cy="32" r="8" fill="#a62020"/>
+</svg>

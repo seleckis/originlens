@@ -49,17 +49,9 @@ a:focus-visible {
 }
 
 .brand-mark {
-  display: grid;
   width: 42px;
   height: 42px;
-  place-items: center;
-  border-radius: 14px 14px 14px 5px;
-  color: #fffdf8;
-  background: #183f35;
-  box-shadow: 0 8px 24px rgb(24 63 53 / 20%);
-  font-size: 22px;
-  font-weight: 760;
-  letter-spacing: -0.08em;
+  object-fit: contain;
 }
 
 .brand-name {

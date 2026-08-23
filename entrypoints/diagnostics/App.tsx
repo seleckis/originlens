@@ -117,9 +117,7 @@ export default function App() {
   return (
     <main className="diagnostics shell">
       <header className="brand">
-        <span className="brand-mark" aria-hidden="true">
-          O
-        </span>
+        <img className="brand-mark" src="/icon/128.png" alt="" />
         <div>
           <h1 className="brand-name">Diagnostics</h1>
           <p className="tagline">

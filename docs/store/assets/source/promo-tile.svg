@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="440" height="280" viewBox="0 0 440 280" role="img" aria-labelledby="title description">
+  <title id="title">OriginLens promotional tile</title>
+  <desc id="description">OriginLens mark with a local-first phishing warning message.</desc>
+  <rect width="440" height="280" rx="24" fill="#f4f2ec"/>
+  <circle cx="384" cy="34" r="116" fill="#c6dabf" opacity=".72"/>
+  <path fill="#183f35" stroke="#fffdf8" stroke-linejoin="round" stroke-width="4" d="M92 44 148 64v40c0 33-21 57-56 71-35-14-56-38-56-71V64l56-20Z"/>
+  <circle cx="79" cy="95" r="28" fill="none" stroke="#fffdf8" stroke-width="11"/>
+  <path fill="none" stroke="#e49a40" stroke-linecap="round" stroke-width="12" d="m99 115 23 23"/>
+  <circle cx="126" cy="72" r="9" fill="#a62020"/>
+  <text x="36" y="216" fill="#183f35" font-family="Inter, Arial, sans-serif" font-size="36" font-weight="750">OriginLens</text>
+  <text x="36" y="246" fill="#5d6863" font-family="Inter, Arial, sans-serif" font-size="17">Local-first phishing warnings</text>
+</svg>

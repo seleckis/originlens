@@ -11,7 +11,11 @@
 - No ML runtime, model weights, analytics SDK, OCR stack, or remote reputation
   client is packaged.
 - `pnpm run sbom:generate` generates a deterministic CycloneDX 1.5 production
-  SBOM, included beside the extension directory in the release-candidate ZIP.
+  SBOM. It is included in the manual-test release candidate and retained beside,
+  never inside, the Chrome Web Store upload ZIP.
+- `pnpm package:web-store` creates a deterministic manifest-at-root upload and
+  validates version, permissions, CSP, icon dimensions, paths, source-map
+  exclusion, and remote-script exclusion before hashing it.
 
 Before a release, review `pnpm audit --prod`, dependency licenses, the generated
 SBOM, lockfile changes, package provenance where available, and WXT output. An

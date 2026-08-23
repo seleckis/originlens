@@ -83,9 +83,7 @@ export default function App() {
   return (
     <main className="popup shell">
       <header className="brand">
-        <span className="brand-mark" aria-hidden="true">
-          O
-        </span>
+        <img className="brand-mark" src="/icon/128.png" alt="" />
         <div>
           <h1 className="brand-name">OriginLens</h1>
           <p className="tagline">See who a site really is.</p>

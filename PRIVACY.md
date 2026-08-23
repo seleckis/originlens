@@ -1,60 +1,105 @@
-# Privacy
+# OriginLens privacy policy
 
-OriginLens is designed for local-first phishing analysis with data minimization
-as an architectural constraint.
+Effective: 2026-08-23
 
-## Current release-candidate behavior
+Applies to: OriginLens v0.1.0
 
-The release-candidate build:
+OriginLens is a local-first phishing-analysis browser extension. This policy
+explains the information the extension handles, how it is used, and what never
+happens to it.
 
-- displays the active page's origin after the user opens the popup;
-- uses isolated-world content scripts on HTTP(S) pages and eligible child frames
-  to count bounded form structure; it has HTTP(S) host access for that purpose;
-- keeps the optional resolver disabled until the user configures and enables it;
-- stores only resolver endpoint, locale, signing key ID, public key, and enabled
-  choice in extension-local storage; it has no telemetry or analytics;
-- never reads field values or DOM HTML;
-- reads at most 64 bounded strings from selected top-frame title, heading,
-  metadata, favicon, accessible-image, high-salience, footer/legal, and
-  login-related surfaces for local alias matching;
-- returns only known registry IDs, confidence, context, counts, and stable
-  evidence codes from identity analysis; raw page strings never cross the
-  content-script boundary;
-- combines only those bounded summaries, the active tab URL reduced locally to
-  its registrable domain, and stable policy gates in transient extension memory;
-- uses capture-phase focus, `beforeinput`, and submit guards only after a danger
-  decision; they inspect event type and target structure, never typed data;
-- retains a user-selected warning bypass only for the current navigation and
-  never changes or persists the underlying danger verdict;
-- retains at most eight origins for only the current top-level navigation in
-  transient service-worker memory; paths, queries, and prior navigations are
-  discarded;
-- displays a modal pre-entry warning only when all three danger gates are
-  satisfied; caution and unknown do not interrupt browsing.
-- observes bounded value-free behavior and destination categories, but never
-  request bodies, clipboard contents, permission decisions, or download data;
-- can export diagnostics that deliberately omit visited locations, resolver
-  endpoints, page text, field values, and history;
-- when explicitly enabled, sends a fixed protocol version plus normalized
-  organization and locale to the configured resolver with omitted credentials,
-  no referrer, no redirect following, and no cache reuse outside its verified
-  bounded in-memory result cache.
+## Information handled on your device
 
-## Enduring commitments
+OriginLens processes two Chrome Web Store user-data categories locally because
+they are necessary for its visible phishing-analysis feature:
 
-OriginLens must never read, store, log, transmit, hash, or inspect values typed
-into password, OTP, payment-card, recovery, seed-phrase, private-key, or other
-sensitive fields. Structural analysis may inspect element types, attributes,
-relationships, visibility, and form destinations, but never field values.
+- **Website content and resources:** bounded selected strings from titles,
+  headings, metadata, accessible image labels, and other high-salience surfaces;
+  structural attributes and types for forms and controls; and bounded page
+  behavior and destination categories.
+- **Current web-browsing activity:** the active page origin, registrable domain,
+  eligible frame structure, and at most eight bounded redirect origins for the
+  current top-level navigation.
 
-The extension must never upload screenshots, page HTML, page text, full URLs,
-query strings, browsing history, cookies, tokens, or personal information.
-Telemetry is disabled by default and initial releases contain no analytics.
+Raw page strings remain inside the isolated content script. The background
+receives only registry identifiers, bounded counts, classifications, decision
+booleans, confidence, and stable evidence codes. Paths and query strings are
+discarded, and OriginLens does not create or retain a browsing-history record.
 
-The optional resolver receives only a normalized claimed organization and locale
-as page-derived data. It does not receive the visited domain or page content;
-comparison remains local. Resolver use is optional with a fully local fallback.
-Verified results, request history, and visited locations are not persisted.
+## Information OriginLens never accesses
 
-Sanitized diagnostics must separate configuration facts and detected structure
-from page-controlled text and sensitive data.
+OriginLens never reads, retains, logs, transmits, hashes, or inspects values
+entered into password, one-time-code, payment-card, recovery, seed-phrase,
+private-key, or other sensitive fields. It does not read ordinary form values,
+DOM HTML, request bodies, clipboard contents, cookies, tokens, or permission
+decisions.
+
+OriginLens does not upload screenshots, page HTML, raw page text, full URLs,
+query strings, browsing history, cookies, tokens, personal information, or
+sensitive values. It has no telemetry, analytics, advertising, or reputation API
+integration.
+
+## How the information is used
+
+Locally processed information is used only to display OriginLens's current
+origin, phishing-analysis state, warning intervention, and inspectable evidence.
+The extension never displays a green “safe” verdict. Current-navigation
+evidence, warning-bypass state, resolver results, and resolver cache entries are
+transient.
+
+Capture-phase focus, `beforeinput`, and submit guards run only after a danger
+decision. They inspect event type and target structure, never typed data.
+
+## Optional identity resolver
+
+The optional self-hosted identity resolver is disabled until you configure and
+enable it. When enabled, it receives only a fixed protocol version, normalized
+claimed organization, and configured locale. It never receives the visited
+domain or location, page content, screenshot, field value, cookie, token, or
+browsing history. Domain comparison remains local.
+
+Requests omit credentials and referrer information, do not follow redirects, and
+require HTTPS except for loopback development. Resolver responses are bounded,
+schema-validated, Ed25519-signed data and are never executed. The operator of a
+user-selected resolver is responsible for that server's own network and logging
+practices.
+
+## Storage, retention, and deletion
+
+Chrome extension-local storage contains only the resolver endpoint, locale,
+signing key ID, public key, and enabled choice. OriginLens stores no page state,
+resolver result, browsing history, sensitive value, or analytics identifier.
+Changing the resolver settings replaces the stored configuration. Removing the
+extension or clearing its extension data deletes the configuration through
+Chrome.
+
+## Sharing, advertising, and human access
+
+The OriginLens project does not sell user data, use it for advertising or
+profiling, operate a resolver backend, or receive handled website content or
+browsing activity. The only optional transfer made by the extension is the
+minimized resolver request described above, sent to the endpoint selected by the
+user. That resolver's operator can process the minimized request under its own
+privacy policy; OriginLens does not provide or control that server.
+
+OriginLens's use and transfer of information received from Google APIs adheres
+to the Chrome Web Store User Data Policy, including the Limited Use
+requirements. Data controlled by the OriginLens project is used only for the
+extension's disclosed, user-facing single purpose; it is not transferred for
+unrelated purposes, advertising, or prohibited human review.
+
+## Security and changes
+
+Executable code is bundled locally under Manifest V3. Extension pages permit
+only packaged scripts. Sanitized diagnostics omit visited locations, resolver
+endpoints, raw page text, form values, and browsing history.
+
+Material privacy changes require a reviewed extension update and corresponding
+changes to this policy and Chrome Web Store disclosures before release.
+
+## Contact
+
+Report ordinary privacy questions at
+https://github.com/seleckis/originlens/issues. Report vulnerabilities through
+GitHub private vulnerability reporting as described in `SECURITY.md`; never
+include real credentials, cookies, tokens, personal data, or browsing history.

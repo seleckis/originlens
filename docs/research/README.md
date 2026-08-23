@@ -15,3 +15,4 @@ academic accuracy claims into product claims.
 | PhishLLM, PhishLang, KnowPhish                   | 3–7            | Stage 7 gate review recorded |
 | USENIX 2025 visual-detector evaluation           | 5–7            | Stage 5/7 review recorded    |
 | PHILTER, USENIX Security 2026                    | 5–7            | Stage 5/7 review recorded    |
+| Chrome Web Store packaging and disclosures       | Publication    | v0.1.0 review recorded       |

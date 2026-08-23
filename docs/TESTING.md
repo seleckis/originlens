@@ -29,6 +29,9 @@ pnpm test
 pnpm build
 pnpm performance:check
 pnpm test:e2e
+pnpm store:assets
+pnpm package:web-store
+pnpm store:validate
 pnpm verify:reproducible
 ```
 
@@ -48,6 +51,19 @@ organizations. They do not submit credentials.
 its SHA-256 companion file, and a CycloneDX SBOM from the production build. The
 ZIP contains the `chrome-mv3` directory required by Chrome's **Load unpacked**
 flow and the SBOM.
+
+## Chrome Web Store artifact
+
+`pnpm package:web-store` creates `dist/originlens-0.1.0-chrome-web-store.zip`,
+its SHA-256 companion, and an adjacent CycloneDX SBOM. Unlike the test ZIP, the
+upload ZIP has `manifest.json` at its root and contains only production
+extension files.
+
+`pnpm store:validate` verifies the exact upload layout, Manifest V3 and version,
+the reviewed permission set, CSP, icon files and dimensions, store-artwork
+dimensions, description length, source-map exclusion, SBOM exclusion, and the
+absence of remotely loaded scripts. Reproducibility testing compares both the
+manual-test and Web Store artifacts across consecutive builds.
 
 `pnpm deploy:test-download` additionally installs the static artifact and the
 Nginx vhost on the local host. It exposes the ZIP, checksum, and separately

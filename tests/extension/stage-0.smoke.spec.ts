@@ -1034,6 +1034,10 @@ test("loads the release candidate without implicit remote requests or safety cla
       })
     | undefined;
   expect(manifest.manifest_version).toBe(3);
+  expect(manifest.version).toBe("0.1.0");
+  expect(manifest.description).toBe(
+    "Local-first phishing warnings using claimed identity, sensitive-data intent, verified domains, and bounded page behavior."
+  );
   expect(manifest.permissions).toEqual([
     "activeTab",
     "scripting",
@@ -1041,6 +1045,12 @@ test("loads the release candidate without implicit remote requests or safety cla
     "webNavigation"
   ]);
   expect(manifest.host_permissions).toEqual(["http://*/*", "https://*/*"]);
+  expect(manifest.icons).toEqual({
+    16: "icon/16.png",
+    32: "icon/32.png",
+    48: "icon/48.png",
+    128: "icon/128.png"
+  });
   expect(contentScript?.matches).toEqual(["http://*/*", "https://*/*"]);
   expect(contentScript?.all_frames).toBe(true);
   expect(contentScript?.match_about_blank).toBe(true);

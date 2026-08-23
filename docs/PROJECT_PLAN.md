@@ -154,7 +154,8 @@ optional developer fallback, not the acceptance URL presented to the user.
 - Complete threat model, permission and CSP review, dependency/supply-chain
   review, reproducible build instructions, SBOM, release/signing workflow,
   private vulnerability reporting, sanitized exports, accessibility tests,
-  performance budgets, compatibility notes, and store privacy/listing drafts.
+  performance budgets, compatibility notes, and reviewed store privacy/listing
+  copy.
 - Run the final matrix: synthetic phishing, benign long-tail, IDN, SSO/OAuth,
   hosting, multilingual Latvian/Russian/English, banks, slow/offline pages,
   resolver failure, and extension update/migration.
