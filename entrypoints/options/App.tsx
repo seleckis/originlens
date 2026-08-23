@@ -8,6 +8,12 @@ import {
   type ResolverConfig
 } from "../../lib/identity-resolver";
 import { localMlCapability } from "../../lib/ml-capability";
+import {
+  disableProtection as revokeProtectionConsent,
+  isProtectionConsent,
+  isProtectionEnabled,
+  PROTECTION_CONSENT_KEY
+} from "../../lib/protection-consent";
 
 type SaveResult = { ok: boolean; error?: string };
 
@@ -26,6 +32,8 @@ export default function App() {
     "The resolver is disabled. All analysis remains local."
   );
   const [busy, setBusy] = useState(false);
+  const [protectionEnabled, setProtectionEnabled] = useState<boolean>();
+  const [protectionMessage, setProtectionMessage] = useState("");
 
   useEffect(() => {
     void browser.runtime
@@ -34,6 +42,18 @@ export default function App() {
         if (stored) setConfig(stored);
       })
       .catch(() => undefined);
+    const onStorageChanged = (
+      changes: Record<string, Browser.storage.StorageChange>,
+      areaName: string
+    ) => {
+      if (areaName !== "local" || !(PROTECTION_CONSENT_KEY in changes)) return;
+      setProtectionEnabled(
+        isProtectionConsent(changes[PROTECTION_CONSENT_KEY]?.newValue)
+      );
+    };
+    browser.storage.onChanged.addListener(onStorageChanged);
+    void isProtectionEnabled().then(setProtectionEnabled);
+    return () => browser.storage.onChanged.removeListener(onStorageChanged);
   }, []);
 
   const update = (change: Partial<ResolverConfig>) =>
@@ -108,6 +128,27 @@ export default function App() {
     });
   };
 
+  const openOnboarding = async () => {
+    await browser.tabs.create({
+      url: browser.runtime.getURL("/onboarding.html")
+    });
+  };
+
+  const disableProtection = async () => {
+    setProtectionMessage("");
+    try {
+      await revokeProtectionConsent();
+      setProtectionEnabled(false);
+      setProtectionMessage(
+        "Protection disabled. Website content and current browsing activity are no longer analyzed."
+      );
+    } catch {
+      setProtectionMessage(
+        "Protection could not be disabled. Please try again."
+      );
+    }
+  };
+
   return (
     <main className="settings shell">
       <header className="brand">
@@ -117,6 +158,46 @@ export default function App() {
           <p className="tagline">See who a site really is.</p>
         </div>
       </header>
+
+      <section
+        className="settings-card card"
+        aria-labelledby="protection-title"
+      >
+        <p className="eyebrow">Local analysis consent</p>
+        <h2 id="protection-title">
+          {protectionEnabled ? "Protection enabled" : "Protection off"}
+        </h2>
+        <p className="muted">
+          {protectionEnabled
+            ? "OriginLens locally analyzes the website content and current browsing activity described in the first-run disclosure. It never reads form values."
+            : "OriginLens does not analyze website content or current browsing activity until you review the disclosure and explicitly enable protection."}
+        </p>
+        <div className="button-row">
+          {protectionEnabled ? (
+            <button
+              className="button"
+              type="button"
+              onClick={() => void disableProtection()}
+            >
+              Disable protection
+            </button>
+          ) : (
+            <button
+              className="button primary"
+              type="button"
+              disabled={protectionEnabled === undefined}
+              onClick={() => void openOnboarding()}
+            >
+              Review disclosure
+            </button>
+          )}
+        </div>
+        {protectionMessage && (
+          <p className="status" role="status">
+            {protectionMessage}
+          </p>
+        )}
+      </section>
 
       <section className="settings-card card" aria-labelledby="resolver-title">
         <p className="eyebrow">Optional network feature</p>

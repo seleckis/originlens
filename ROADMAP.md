@@ -15,10 +15,12 @@ pushed, and tagged.
 | 6     | Optional self-hostable positive identity resolver               | Complete                |
 | 7     | Optional local ML, only if measured gaps justify it             | Complete: not justified |
 | 8     | Hardening and release candidate                                 | Complete                |
+| 9     | First-run privacy disclosure and affirmative consent            | Complete                |
 
-The separately packaged v0.1.0 Chrome Web Store candidate is awaiting its own
-full verification and manual acceptance. Store upload, review submission, and
-publication remain independent approval gates.
+The v0.1.0 checkpoint was not uploaded after a newly enforced Chrome Web Store
+disclosure rule was identified. Stage 9 prepares a v0.1.1 candidate that keeps
+all page and navigation analysis inactive until affirmative consent. Store
+upload, review submission, and publication remain independent approval gates.
 
 The strongest phishing decision requires the conjunction of a strong identity
 claim, sensitive-data intent, and a provenance-backed domain mismatch. No

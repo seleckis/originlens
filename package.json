@@ -1,6 +1,6 @@
 {
   "name": "originlens",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Privacy-first phishing detection for Chrome. See who a site really is.",
   "license": "MPL-2.0",

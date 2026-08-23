@@ -2,11 +2,25 @@
 
 Effective: 2026-08-23
 
-Applies to: OriginLens v0.1.0
+Applies to: OriginLens v0.1.1
 
 OriginLens is a local-first phishing-analysis browser extension. This policy
 explains the information the extension handles, how it is used, and what never
 happens to it.
+
+## Your consent and control
+
+OriginLens does not analyze website content or current web-browsing activity
+until its first-run disclosure is shown and you affirmatively select **Enable
+OriginLens protection**. The consent record is versioned so a future material
+change can require a new disclosure and choice instead of silently preserving
+old consent.
+
+You can withdraw consent at any time with **Disable protection** in Options.
+Revocation removes active page observers and warnings and clears transient
+navigation, identity, structural, behavior, decision, bypass, resolver-result,
+and resolver-cache state. Analysis remains off until you review the disclosure
+and enable it again.
 
 ## Information handled on your device
 
@@ -66,12 +80,13 @@ practices.
 
 ## Storage, retention, and deletion
 
-Chrome extension-local storage contains only the resolver endpoint, locale,
-signing key ID, public key, and enabled choice. OriginLens stores no page state,
-resolver result, browsing history, sensitive value, or analytics identifier.
-Changing the resolver settings replaces the stored configuration. Removing the
-extension or clearing its extension data deletes the configuration through
-Chrome.
+Chrome extension-local storage contains only the versioned local-analysis
+consent choice and the resolver endpoint, locale, signing key ID, public key,
+and enabled choice. OriginLens stores no page state, resolver result, browsing
+history, sensitive value, or analytics identifier. Changing settings replaces
+the stored configuration. Disabling protection removes its consent record;
+removing the extension or clearing its extension data deletes all configuration
+through Chrome.
 
 ## Sharing, advertising, and human access
 
@@ -94,8 +109,9 @@ Executable code is bundled locally under Manifest V3. Extension pages permit
 only packaged scripts. Sanitized diagnostics omit visited locations, resolver
 endpoints, raw page text, form values, and browsing history.
 
-Material privacy changes require a reviewed extension update and corresponding
-changes to this policy and Chrome Web Store disclosures before release.
+Material privacy changes require a reviewed extension update, corresponding
+changes to this policy and Chrome Web Store disclosures, proactive in-product
+notice, and renewed consent where the disclosed handling changes.
 
 ## Contact
 

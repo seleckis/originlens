@@ -6,6 +6,9 @@ OriginLens is a Chrome Manifest V3 extension built with WXT, strict TypeScript,
 and React.
 
 ```text
+first-run disclosure ── explicit consent ── versioned storage.local record
+                                      │
+                                      ▼
 hostile page/frame DOM
   │ isolated-world, bounded/value-free inspection
   ▼
@@ -22,21 +25,29 @@ MV3 service worker ── local registry + URL/PSL + explicit decision gates
                                            (comparison stays local)
 ```
 
-Content scripts run in eligible HTTP(S) frames and report at most 32 bounded
-frame summaries. A frame tracker caps behavior events at 64. Closed shadow
-roots, inaccessible/excess frames, canvas text, arbitrary JavaScript data flow,
-and request bodies are not treated as benign; supported limits produce explicit
-partial/unknown evidence. Sensitive field values are never read.
+The bundled content script is present in eligible HTTP(S) frames but, without a
+current consent record, it registers only the extension-local storage listener
+needed to observe a future opt-in. It does not create analyzers, DOM observers,
+click handlers, identity extraction, or reports. The service worker likewise
+ignores navigation events and returns no page-analysis state before consent.
+
+After opt-in, content scripts report at most 32 bounded frame summaries. A frame
+tracker caps behavior events at 64. Closed shadow roots, inaccessible/excess
+frames, canvas text, arbitrary JavaScript data flow, and request bodies are not
+treated as benign; supported limits produce explicit partial/unknown evidence.
+Sensitive field values are never read.
 
 The top frame scans at most 64 selected identity strings, each capped at 160
 characters and 32 text nodes. It matches them locally against registry aliases
 and sends only registry IDs, source/context codes, confidence, and bounds. Raw
 page strings do not cross the content boundary.
 
-The service worker retains only current-navigation facts in memory: per-frame
-summaries, top-frame identity, resolver result/cache, decision, bypass, and at
-most eight redirect origins. Paths and queries are discarded. A top-level/SPA
-navigation resets analysis and bypass state. Options persist only resolver
+The service worker retains only post-consent current-navigation facts in memory:
+per-frame summaries, top-frame identity, resolver result/cache, decision,
+bypass, and at most eight redirect origins. Paths and queries are discarded. A
+top-level/SPA navigation resets analysis and bypass state. Revocation destroys
+active content observers/warnings and clears all transient service-worker
+analysis. Options persist only the versioned consent choice and resolver
 configuration in `storage.local`; no page state or browsing history is stored.
 
 Danger requires strong identity, value-free sensitive intent, and a verified

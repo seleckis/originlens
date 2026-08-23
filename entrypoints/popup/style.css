@@ -11,6 +11,24 @@ body {
   padding: 18px;
 }
 
+.setup-card {
+  margin-top: 30px;
+  padding: 22px;
+}
+
+.setup-card h2 {
+  margin: 0;
+  color: #26312c;
+  font-size: 18px;
+}
+
+.setup-card p:not(.eyebrow) {
+  margin: 10px 0 18px;
+  color: #63706a;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
 .origin-value {
   overflow: hidden;
   margin: 0;

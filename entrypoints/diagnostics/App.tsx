@@ -29,6 +29,11 @@ import type { ResolverStatus } from "../../lib/identity-resolver";
 import { localMlCapability } from "../../lib/ml-capability";
 import { createSanitizedDiagnostics } from "../../lib/diagnostics-export";
 import { analyzeUrl } from "../../lib/url-analysis";
+import {
+  isProtectionConsent,
+  isProtectionEnabled,
+  PROTECTION_CONSENT_KEY
+} from "../../lib/protection-consent";
 
 const checks = [
   {
@@ -55,7 +60,8 @@ const checks = [
   {
     label: "Page analysis",
     value: "Bounded structure, identity, and decision gates",
-    detail: "Field values and raw page text never cross the content boundary"
+    detail:
+      "Begins only after affirmative consent; field values and raw page text never cross the content boundary"
   }
 ] as const;
 
@@ -73,6 +79,7 @@ export default function App() {
   const [decision, setDecision] = useState<DecisionSummary>();
   const [behavior, setBehavior] = useState<BehaviorSummary>();
   const [resolver, setResolver] = useState<ResolverStatus>();
+  const [protectionEnabled, setProtectionEnabled] = useState<boolean>();
   const downloadSanitizedDiagnostics = () => {
     const exported = createSanitizedDiagnostics({
       ...(behavior ? { behavior } : {}),
@@ -93,6 +100,35 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
   useEffect(() => {
+    const onStorageChanged = (
+      changes: Record<string, Browser.storage.StorageChange>,
+      areaName: string
+    ) => {
+      if (areaName !== "local" || !(PROTECTION_CONSENT_KEY in changes)) return;
+      setProtectionEnabled(
+        isProtectionConsent(changes[PROTECTION_CONSENT_KEY]?.newValue)
+      );
+    };
+    browser.storage.onChanged.addListener(onStorageChanged);
+    void isProtectionEnabled().then(setProtectionEnabled);
+    void getResolverStatus()
+      .then(setResolver)
+      .catch(() => undefined);
+    return () => browser.storage.onChanged.removeListener(onStorageChanged);
+  }, []);
+  useEffect(() => {
+    if (!protectionEnabled) {
+      setSummary(undefined);
+      setNavigation(undefined);
+      setIdentity(undefined);
+      setDecision(undefined);
+      setBehavior(undefined);
+      if (protectionEnabled === false) setResolver(undefined);
+      return;
+    }
+    void getResolverStatus()
+      .then(setResolver)
+      .catch(() => undefined);
     const tabId = Number(new URLSearchParams(location.search).get("tabId"));
     const inspectedTabId = Number.isInteger(tabId) ? tabId : undefined;
     void getStructuralSummaryForTab(inspectedTabId)
@@ -110,10 +146,7 @@ export default function App() {
     void getBehaviorSummaryForTab(inspectedTabId)
       .then(setBehavior)
       .catch(() => undefined);
-    void getResolverStatus()
-      .then(setResolver)
-      .catch(() => undefined);
-  }, []);
+  }, [protectionEnabled]);
   return (
     <main className="diagnostics shell">
       <header className="brand">
@@ -125,6 +158,20 @@ export default function App() {
           </p>
         </div>
       </header>
+      <section
+        className="diagnostics-card card"
+        aria-labelledby="protection-state"
+      >
+        <p className="eyebrow">Consent state</p>
+        <h2 id="protection-state">
+          {protectionEnabled ? "Protection enabled" : "Protection off"}
+        </h2>
+        <p className="muted">
+          {protectionEnabled
+            ? "Current-tab diagnostics are available because local page and browsing-activity processing was explicitly enabled."
+            : "No website content or current browsing activity is analyzed until the first-run disclosure is accepted."}
+        </p>
+      </section>
       <section className="diagnostics-card card" aria-labelledby="build-facts">
         <p className="eyebrow">Local extension state</p>
         <h2 id="build-facts">Build facts</h2>

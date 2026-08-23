@@ -53,4 +53,16 @@ for (const obsolete of [
 
 if (!contents.submission.includes("Publishing: deferred after review"))
   throw new Error("Submission worksheet must require deferred publishing");
+
+const consentRequirements = {
+  listing:
+    "does not analyze website content or current browsing activity until",
+  privacy:
+    "does not analyze website content or current web-browsing activity until",
+  disclosures: "Enable OriginLens protection",
+  submission: "Enable OriginLens protection"
+};
+for (const [key, phrase] of Object.entries(consentRequirements))
+  if (!contents[key].includes(phrase))
+    throw new Error(`${files[key]} is missing consent disclosure: ${phrase}`);
 process.stdout.write("Publication documents are internally consistent.\n");

@@ -36,6 +36,13 @@ are outside the extension's enforcement boundary.
 
 ## Release-candidate attack surface
 
+Before affirmative consent, the content script does not access page DOM or
+behavior and the service worker does not process navigation events or expose
+page-analysis state. A malformed, missing, or superseded consent record is
+disabled. The first-run page states the handled categories, purpose, local
+default, sensitive-value exclusions, and revocation path before the enable
+control becomes available.
+
 Stage 2 injects a bundled isolated-world script into HTTP(S) pages. The script
 considers the DOM hostile and exposes a schema-validated structural response
 only over Chrome's private extension tab-message channel. It never reads field
@@ -82,7 +89,9 @@ locally, and rate limits/cache-bounds requests. Failure or invalid data restores
 the bundled local assessment; a response cannot create danger, only a signed
 positive relationship that suppresses a mismatch.
 
-Persistent storage contains only user-entered resolver configuration. A local
+Persistent storage contains only the versioned protection-consent record and
+user-entered resolver configuration. Revocation removes the consent record,
+destroys page observers/interventions, and clears transient analysis. A local
 malicious extension or compromised browser profile remains outside the trust
 boundary. Release threats are reduced with local-only CSP, locked dependencies,
 SBOM generation, deterministic packaging, checksum publication, private

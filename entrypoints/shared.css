@@ -117,3 +117,17 @@ a:focus-visible {
 .button.primary:hover {
   background: #24594b;
 }
+
+.button:disabled {
+  border-color: #aeb7b2;
+  color: #6f7a75;
+  background: #e7eae7;
+  cursor: not-allowed;
+}
+
+.button.primary:disabled,
+.button.primary:disabled:hover {
+  border-color: #aeb7b2;
+  color: #6f7a75;
+  background: #e7eae7;
+}

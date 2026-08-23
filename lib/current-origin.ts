@@ -32,6 +32,7 @@ import {
 import { toDisplayOrigin, type DisplayOrigin } from "./origin";
 import { analyzeUrl, type UrlAnalysis } from "./url-analysis";
 import { isResolverStatus, type ResolverStatus } from "./identity-resolver";
+import { isProtectionEnabled } from "./protection-consent";
 
 const frameInjections = new Map<string, Promise<void>>();
 
@@ -88,6 +89,7 @@ async function inspectFrameValue<T>(
 }
 
 export async function getCurrentOrigin(): Promise<DisplayOrigin> {
+  if (!(await isProtectionEnabled())) return toDisplayOrigin(undefined);
   try {
     const [tab] = await browser.tabs.query({
       active: true,
@@ -100,6 +102,7 @@ export async function getCurrentOrigin(): Promise<DisplayOrigin> {
 }
 
 export async function getCurrentUrlAnalysis(): Promise<UrlAnalysis> {
+  if (!(await isProtectionEnabled())) return analyzeUrl(undefined);
   try {
     const [tab] = await browser.tabs.query({
       active: true,
@@ -114,6 +117,7 @@ export async function getCurrentUrlAnalysis(): Promise<UrlAnalysis> {
 export async function getCurrentStructuralSummary(): Promise<
   StructuralSummary | undefined
 > {
+  if (!(await isProtectionEnabled())) return undefined;
   try {
     const [tab] = await browser.tabs.query({
       active: true,
@@ -163,6 +167,7 @@ async function inspectIdentity(
 export async function getStructuralSummaryForTab(
   tabId: number | undefined
 ): Promise<StructuralSummary | undefined> {
+  if (!(await isProtectionEnabled())) return undefined;
   if (typeof tabId !== "number") return undefined;
 
   let frameIds = [0];
@@ -195,6 +200,7 @@ export async function getStructuralSummaryForTab(
 export async function getBehaviorSummaryForTab(
   tabId: number | undefined
 ): Promise<BehaviorSummary | undefined> {
+  if (!(await isProtectionEnabled())) return undefined;
   if (typeof tabId !== "number") return undefined;
   try {
     const stored: unknown = await browser.runtime.sendMessage({
@@ -233,6 +239,7 @@ export async function getBehaviorSummaryForTab(
 export async function getCurrentBehaviorSummary(): Promise<
   BehaviorSummary | undefined
 > {
+  if (!(await isProtectionEnabled())) return undefined;
   try {
     const [tab] = await browser.tabs.query({
       active: true,
@@ -247,6 +254,7 @@ export async function getCurrentBehaviorSummary(): Promise<
 export async function getNavigationSummaryForTab(
   tabId: number | undefined
 ): Promise<NavigationSummary | undefined> {
+  if (!(await isProtectionEnabled())) return undefined;
   if (typeof tabId !== "number") return undefined;
   try {
     const summary: unknown = await browser.runtime.sendMessage({
@@ -262,6 +270,7 @@ export async function getNavigationSummaryForTab(
 export async function getIdentityAssessmentForTab(
   tabId: number | undefined
 ): Promise<IdentityAssessment | undefined> {
+  if (!(await isProtectionEnabled())) return undefined;
   if (typeof tabId !== "number") return undefined;
   try {
     const stored: unknown = await browser.runtime.sendMessage({
@@ -282,6 +291,7 @@ export async function getIdentityAssessmentForTab(
 export async function getDecisionSummaryForTab(
   tabId: number | undefined
 ): Promise<DecisionSummary | undefined> {
+  if (!(await isProtectionEnabled())) return undefined;
   if (typeof tabId !== "number") return undefined;
   try {
     const stored: unknown = await browser.runtime.sendMessage({
@@ -310,6 +320,7 @@ export async function getDecisionSummaryForTab(
 export async function getCurrentDecisionSummary(): Promise<
   DecisionSummary | undefined
 > {
+  if (!(await isProtectionEnabled())) return undefined;
   try {
     const [tab] = await browser.tabs.query({
       active: true,
@@ -324,6 +335,7 @@ export async function getCurrentDecisionSummary(): Promise<
 export async function getCurrentIdentityAssessment(): Promise<
   IdentityAssessment | undefined
 > {
+  if (!(await isProtectionEnabled())) return undefined;
   try {
     const [tab] = await browser.tabs.query({
       active: true,
@@ -338,6 +350,7 @@ export async function getCurrentIdentityAssessment(): Promise<
 export async function getCurrentNavigationSummary(): Promise<
   NavigationSummary | undefined
 > {
+  if (!(await isProtectionEnabled())) return undefined;
   try {
     const [tab] = await browser.tabs.query({
       active: true,

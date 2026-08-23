@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import process from "node:process";
 
-const EXPECTED_VERSION = "0.1.0";
+const EXPECTED_VERSION = "0.1.1";
 const EXPECTED_PERMISSIONS = [
   "activeTab",
   "scripting",
@@ -42,7 +42,7 @@ function pngDimensions(bytes, entry) {
 }
 
 const input = process.argv[2];
-const artifact = resolve(input ?? "dist/originlens-0.1.0-chrome-web-store.zip");
+const artifact = resolve(input ?? "dist/originlens-0.1.1-chrome-web-store.zip");
 if (!existsSync(artifact)) fail(`artifact not found: ${artifact}`);
 
 const entries = execFileSync("unzip", ["-Z1", artifact], {
@@ -53,6 +53,8 @@ const entries = execFileSync("unzip", ["-Z1", artifact], {
   .filter(Boolean);
 if (!entries.includes("manifest.json"))
   fail("manifest.json is not at ZIP root");
+if (!entries.includes("onboarding.html"))
+  fail("affirmative-consent onboarding page is absent from ZIP");
 if (entries.some((entry) => entry.startsWith("/") || entry.includes("../")))
   fail("archive contains an unsafe path");
 if (entries.some((entry) => entry.endsWith(".map")))

@@ -1,0 +1,82 @@
+.onboarding {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding-top: 28px;
+  padding-bottom: 40px;
+}
+
+.consent-card {
+  margin-top: 20px;
+  padding: 26px;
+}
+
+.consent-card h2 {
+  margin: 0;
+  color: #183f35;
+  font-size: 30px;
+  letter-spacing: -0.03em;
+}
+
+.lead {
+  max-width: 620px;
+  color: #45554f;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.disclosure {
+  margin: 18px 0;
+  padding: 18px 20px;
+  border: 1px solid rgb(24 63 53 / 16%);
+  border-radius: 14px;
+  background: #f8faf7;
+}
+
+.disclosure h3 {
+  margin: 14px 0 5px;
+  color: #183f35;
+  font-size: 15px;
+}
+
+.disclosure h3:first-child {
+  margin-top: 0;
+}
+
+.disclosure p,
+.disclosure li {
+  color: #4f5e58;
+  line-height: 1.5;
+}
+
+.disclosure ul {
+  margin-bottom: 0;
+  padding-left: 22px;
+}
+
+.consent-check {
+  display: flex;
+  max-width: 640px;
+  gap: 12px;
+  align-items: flex-start;
+  color: #253b33;
+  font-weight: 680;
+  line-height: 1.5;
+}
+
+.consent-check input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.consent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.error {
+  color: #8f1d1d;
+}

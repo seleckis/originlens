@@ -1,6 +1,6 @@
-# Chrome Web Store privacy disclosures — OriginLens v0.1.0
+# Chrome Web Store privacy disclosures — OriginLens v0.1.1
 
-Status: publication-ready answers for the exact verified v0.1.0 package. Recheck
+Status: publication-ready answers for the exact verified v0.1.1 package. Recheck
 the current dashboard wording immediately before submission.
 
 ## Single purpose
@@ -9,6 +9,13 @@ Warn users before sensitive-data entry when a page claims a verified
 organization but is served from a domain not verified for that organization.
 
 ## User data types
+
+Before handling either category, OriginLens displays an in-product first-run
+disclosure describing the categories, purpose, local default, exclusions, and
+revocation path. Analysis remains inactive until the user selects the consent
+checkbox and **Enable OriginLens protection**. Disabling protection removes the
+versioned consent record, stops observers and warnings, and clears transient
+analysis.
 
 Select:
 
@@ -38,8 +45,9 @@ ordinary form controls.
 - The operator of a user-selected resolver can process the minimized
   organization/locale request and is governed by that operator's own policy;
   OriginLens does not provide or control that server.
-- Persistent extension-local data is limited to resolver endpoint, locale,
-  signing key ID, public key, and enabled choice.
+- Persistent extension-local data is limited to the versioned protection-consent
+  choice plus resolver endpoint, locale, signing key ID, public key, and enabled
+  choice.
 
 Certify every Chrome Web Store Limited Use statement: allowed use, restricted
 transfer, no advertising, and no prohibited human access.

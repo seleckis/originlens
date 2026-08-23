@@ -30,6 +30,11 @@ import {
   type ResolverStatus
 } from "../lib/identity-resolver";
 import { analyzeUrl } from "../lib/url-analysis";
+import {
+  getProtectionConsent,
+  isProtectionConsent,
+  PROTECTION_CONSENT_KEY
+} from "../lib/protection-consent";
 
 type NavigationState = {
   committed: boolean;
@@ -45,6 +50,7 @@ type TabResolverState = {
 };
 
 const RESOLVER_CONFIG_KEY = "identityResolverConfig";
+const ONBOARDING_PATH = "/onboarding.html";
 
 function originOf(rawUrl: string): string | undefined {
   try {
@@ -84,6 +90,11 @@ const badgePresentation = {
     color: "#59645f",
     text: "?",
     title: "OriginLens — analysis unavailable or incomplete"
+  },
+  disabled: {
+    color: "#59645f",
+    text: "",
+    title: "OriginLens — protection is off; open OriginLens to enable"
   }
 } as const;
 
@@ -100,8 +111,14 @@ export default defineBackground(() => {
   const bypassedTabs = new Set<number>();
   const tabResolverStates = new Map<number, TabResolverState>();
   const resolverClient = new IdentityResolverClient();
+  let protectionEnabled = false;
   let resolverConfig: ResolverConfig = disabledResolverConfig;
   let lastResolverResult: ResolverResult | undefined;
+  const protectionConsentReady = getProtectionConsent()
+    .then((consent) => {
+      protectionEnabled = Boolean(consent);
+    })
+    .catch(() => undefined);
   const resolverConfigReady = browser.storage.local
     .get(RESOLVER_CONFIG_KEY)
     .then((stored) => {
@@ -146,9 +163,11 @@ export default defineBackground(() => {
     tabId: number,
     decision: DecisionSummary | undefined
   ) => {
-    const presentation = decision
-      ? badgePresentation[decision.state]
-      : badgePresentation.unknown;
+    const presentation = !protectionEnabled
+      ? badgePresentation.disabled
+      : decision
+        ? badgePresentation[decision.state]
+        : badgePresentation.unknown;
     await Promise.all([
       browser.action.setBadgeText({ tabId, text: presentation.text }),
       browser.action.setBadgeBackgroundColor({
@@ -262,6 +281,7 @@ export default defineBackground(() => {
   };
 
   const republishKnownTabs = () => {
+    if (!protectionEnabled) return;
     for (const tabId of identities.keys())
       void browser.tabs
         .get(tabId)
@@ -269,7 +289,42 @@ export default defineBackground(() => {
         .catch(() => undefined);
   };
 
+  const clearAllAnalysis = () => {
+    const tabIds = new Set([
+      ...navigations.keys(),
+      ...summaries.keys(),
+      ...behaviorSummaries.keys(),
+      ...identities.keys(),
+      ...assessments.keys(),
+      ...decisions.keys(),
+      ...bypassedTabs,
+      ...tabResolverStates.keys()
+    ]);
+    navigations.clear();
+    for (const tabId of tabIds) resetTabAnalysis(tabId);
+    resolverClient.clear();
+    lastResolverResult = undefined;
+  };
+
+  browser.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== "local" || !(PROTECTION_CONSENT_KEY in changes)) return;
+    protectionEnabled = isProtectionConsent(
+      changes[PROTECTION_CONSENT_KEY]?.newValue
+    );
+    if (!protectionEnabled) clearAllAnalysis();
+  });
+
+  browser.runtime.onInstalled.addListener(() => {
+    void protectionConsentReady.then(() => {
+      if (protectionEnabled) return;
+      void browser.tabs
+        .create({ url: browser.runtime.getURL(ONBOARDING_PATH) })
+        .catch(() => undefined);
+    });
+  });
+
   browser.webNavigation.onBeforeNavigate.addListener((details) => {
+    if (!protectionEnabled) return;
     if (details.frameId === 0) {
       const existing = navigations.get(details.tabId);
       const state =
@@ -291,6 +346,7 @@ export default defineBackground(() => {
   });
 
   browser.webNavigation.onCommitted.addListener((details) => {
+    if (!protectionEnabled) return;
     if (details.frameId !== 0) return;
     const state = navigations.get(details.tabId) ?? {
       committed: false,
@@ -308,6 +364,7 @@ export default defineBackground(() => {
   });
 
   browser.webNavigation.onErrorOccurred.addListener((details) => {
+    if (!protectionEnabled) return;
     if (details.frameId !== 0) return;
     const state = navigations.get(details.tabId);
     if (state && !state.committed) state.failed = true;
@@ -343,6 +400,28 @@ export default defineBackground(() => {
 
     if (payload.type === "originlens.get-resolver-status") {
       void resolverConfigReady.then(() => respond(resolverStatus()));
+      return true;
+    }
+
+    if (
+      payload.type === "originlens.protection-revoked" &&
+      typeof sender.tab?.id === "number" &&
+      (sender.frameId ?? 0) === 0
+    ) {
+      const tabId = sender.tab.id;
+      void getProtectionConsent()
+        .then((consent) => {
+          if (consent) return;
+          protectionEnabled = false;
+          navigations.delete(tabId);
+          resetTabAnalysis(tabId);
+        })
+        .catch(() => {
+          protectionEnabled = false;
+          navigations.delete(tabId);
+          resetTabAnalysis(tabId);
+        })
+        .finally(() => respond(undefined));
       return true;
     }
 
@@ -388,7 +467,13 @@ export default defineBackground(() => {
       payload.type === "originlens.get-identity-assessment" &&
       typeof payload.tabId === "number"
     ) {
-      respond(assessments.get(payload.tabId));
+      void protectionConsentReady.then(() =>
+        respond(
+          protectionEnabled
+            ? assessments.get(payload.tabId as number)
+            : undefined
+        )
+      );
       return true;
     }
 
@@ -396,7 +481,11 @@ export default defineBackground(() => {
       payload.type === "originlens.get-decision-summary" &&
       typeof payload.tabId === "number"
     ) {
-      respond(decisions.get(payload.tabId));
+      void protectionConsentReady.then(() =>
+        respond(
+          protectionEnabled ? decisions.get(payload.tabId as number) : undefined
+        )
+      );
       return true;
     }
 
@@ -404,12 +493,16 @@ export default defineBackground(() => {
       payload.type === "originlens.get-navigation-summary" &&
       typeof payload.tabId === "number"
     ) {
-      const state = navigations.get(payload.tabId);
-      respond(
-        state?.committed
-          ? createNavigationSummary(state.origins, state.qualifiers)
-          : undefined
-      );
+      void protectionConsentReady.then(() => {
+        const state = protectionEnabled
+          ? navigations.get(payload.tabId as number)
+          : undefined;
+        respond(
+          state?.committed
+            ? createNavigationSummary(state.origins, state.qualifiers)
+            : undefined
+        );
+      });
       return true;
     }
 
@@ -419,6 +512,10 @@ export default defineBackground(() => {
       (sender.frameId ?? 0) === 0 &&
       decisions.get(sender.tab.id)?.state === "danger"
     ) {
+      if (!protectionEnabled) {
+        respond(undefined);
+        return true;
+      }
       bypassedTabs.add(sender.tab.id);
       respond(publishDecision(sender.tab.id, sender.tab.url));
       return true;
@@ -429,6 +526,10 @@ export default defineBackground(() => {
       typeof sender.tab?.id === "number" &&
       (sender.frameId ?? 0) === 0
     ) {
+      if (!protectionEnabled) {
+        respond(undefined);
+        return true;
+      }
       resetTabAnalysis(sender.tab.id);
       respond(undefined);
       return true;
@@ -438,12 +539,17 @@ export default defineBackground(() => {
       payload.type === "originlens.get-behavior-summary" &&
       typeof payload.tabId === "number"
     ) {
-      const frames = [
-        ...(behaviorSummaries.get(payload.tabId)?.values() ?? [])
-      ].slice(0, STRUCTURAL_FRAME_LIMIT);
-      respond(
-        frames.length > 0 ? combineFrameBehaviorSummaries(frames) : undefined
-      );
+      void protectionConsentReady.then(() => {
+        const frames = protectionEnabled
+          ? [
+              ...(behaviorSummaries.get(payload.tabId as number)?.values() ??
+                [])
+            ].slice(0, STRUCTURAL_FRAME_LIMIT)
+          : [];
+        respond(
+          frames.length > 0 ? combineFrameBehaviorSummaries(frames) : undefined
+        );
+      });
       return true;
     }
 
@@ -451,13 +557,19 @@ export default defineBackground(() => {
       payload.type === "originlens.get-structural-summary" &&
       typeof payload.tabId === "number"
     ) {
-      const frames = [...(summaries.get(payload.tabId)?.values() ?? [])].slice(
-        0,
-        STRUCTURAL_FRAME_LIMIT
-      );
-      respond(
-        frames.length > 0 ? combineFrameStructuralSummaries(frames) : undefined
-      );
+      void protectionConsentReady.then(() => {
+        const frames = protectionEnabled
+          ? [...(summaries.get(payload.tabId as number)?.values() ?? [])].slice(
+              0,
+              STRUCTURAL_FRAME_LIMIT
+            )
+          : [];
+        respond(
+          frames.length > 0
+            ? combineFrameStructuralSummaries(frames)
+            : undefined
+        );
+      });
       return true;
     }
 
@@ -468,24 +580,38 @@ export default defineBackground(() => {
     )
       return undefined;
 
+    const tabId = sender.tab.id;
     const frameId = sender.frameId ?? 0;
-    const tabSummaries =
-      summaries.get(sender.tab.id) ?? new Map<number, FrameStructuralSummary>();
-    if (tabSummaries.has(frameId) || tabSummaries.size < STRUCTURAL_FRAME_LIMIT)
-      tabSummaries.set(frameId, payload.summary);
-    summaries.set(sender.tab.id, tabSummaries);
-    if (isFrameBehaviorSummary(payload.behavior)) {
-      const tabBehavior =
-        behaviorSummaries.get(sender.tab.id) ??
-        new Map<number, FrameBehaviorSummary>();
-      if (tabBehavior.has(frameId) || tabBehavior.size < STRUCTURAL_FRAME_LIMIT)
-        tabBehavior.set(frameId, payload.behavior);
-      behaviorSummaries.set(sender.tab.id, tabBehavior);
-    }
-    if (frameId === 0 && isPageIdentitySummary(payload.identity))
-      identities.set(sender.tab.id, payload.identity);
-    publishDecision(sender.tab.id, sender.tab.url);
-    return undefined;
+    void protectionConsentReady.then(() => {
+      if (!protectionEnabled) {
+        respond(undefined);
+        return;
+      }
+      const tabSummaries =
+        summaries.get(tabId) ?? new Map<number, FrameStructuralSummary>();
+      if (
+        tabSummaries.has(frameId) ||
+        tabSummaries.size < STRUCTURAL_FRAME_LIMIT
+      )
+        tabSummaries.set(frameId, payload.summary as FrameStructuralSummary);
+      summaries.set(tabId, tabSummaries);
+      if (isFrameBehaviorSummary(payload.behavior)) {
+        const tabBehavior =
+          behaviorSummaries.get(tabId) ??
+          new Map<number, FrameBehaviorSummary>();
+        if (
+          tabBehavior.has(frameId) ||
+          tabBehavior.size < STRUCTURAL_FRAME_LIMIT
+        )
+          tabBehavior.set(frameId, payload.behavior);
+        behaviorSummaries.set(tabId, tabBehavior);
+      }
+      if (frameId === 0 && isPageIdentitySummary(payload.identity))
+        identities.set(tabId, payload.identity);
+      publishDecision(tabId, sender.tab?.url);
+      respond(undefined);
+    });
+    return true;
   });
 
   void resolverConfigReady.then(() => {

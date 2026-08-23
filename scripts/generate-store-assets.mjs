@@ -4,7 +4,9 @@ import {
   createReadStream,
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
+  rmSync,
   statSync
 } from "node:fs";
 import { createServer } from "node:http";
@@ -27,6 +29,8 @@ const fixturePort = 4190;
 
 mkdirSync(iconOutput, { recursive: true });
 mkdirSync(screenshotOutput, { recursive: true });
+for (const name of readdirSync(screenshotOutput))
+  if (name.endsWith(".png")) rmSync(resolve(screenshotOutput, name));
 
 function contentType(path) {
   return (
@@ -138,6 +142,21 @@ const temporaryPopup = resolve(
 try {
   const worker = await extensionWorker(context);
   const extensionId = new URL(worker.url()).host;
+  const onboarding = await context.newPage();
+  await onboarding.setViewportSize({ width: 1280, height: 800 });
+  await onboarding.goto(`chrome-extension://${extensionId}/onboarding.html`);
+  await onboarding
+    .getByRole("heading", { name: "Before enabling protection" })
+    .waitFor();
+  await onboarding.screenshot({
+    path: resolve(screenshotOutput, "01-onboarding.png")
+  });
+  await onboarding.close();
+  await worker.evaluate(() =>
+    globalThis.chrome.storage.local.set({
+      protectionConsent: { enabled: true, version: 1 }
+    })
+  );
   const inspected = await context.newPage();
   await inspected.setViewportSize({ width: 1280, height: 800 });
   await inspected.goto(
@@ -146,7 +165,7 @@ try {
   );
   await inspected.getByRole("alertdialog").waitFor({ timeout: 5_000 });
   await inspected.screenshot({
-    path: resolve(screenshotOutput, "01-warning.png")
+    path: resolve(screenshotOutput, "02-warning.png")
   });
   const tabId = await worker.evaluate(async (url) => {
     const tabs = await globalThis.chrome.tabs.query({ url });
@@ -176,7 +195,7 @@ try {
     await compositePopup(
       compositor,
       temporaryPopup,
-      resolve(screenshotOutput, "02-popup-danger.png")
+      resolve(screenshotOutput, "03-popup-danger.png")
     );
   } finally {
     await compositor.close();
@@ -189,7 +208,7 @@ try {
   );
   await diagnostics.getByText("Danger", { exact: true }).waitFor();
   await diagnostics.screenshot({
-    path: resolve(screenshotOutput, "03-diagnostics.png")
+    path: resolve(screenshotOutput, "04-diagnostics.png")
   });
   await diagnostics.close();
 
@@ -197,8 +216,9 @@ try {
   await options.setViewportSize({ width: 1280, height: 800 });
   await options.goto(`chrome-extension://${extensionId}/options.html`);
   await options.getByText("Disabled by default", { exact: false }).waitFor();
+  await options.evaluate(() => globalThis.scrollTo(0, 0));
   await options.screenshot({
-    path: resolve(screenshotOutput, "04-options.png")
+    path: resolve(screenshotOutput, "05-options.png")
   });
   await options.close();
   await inspected.close();

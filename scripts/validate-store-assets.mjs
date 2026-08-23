@@ -9,10 +9,11 @@ const expected = new Map([
   ["public/icon/48.png", [48, 48]],
   ["public/icon/128.png", [128, 128]],
   ["docs/store/assets/generated/promo-440x280.png", [440, 280]],
-  ["docs/store/assets/generated/screenshots/01-warning.png", [1280, 800]],
-  ["docs/store/assets/generated/screenshots/02-popup-danger.png", [1280, 800]],
-  ["docs/store/assets/generated/screenshots/03-diagnostics.png", [1280, 800]],
-  ["docs/store/assets/generated/screenshots/04-options.png", [1280, 800]]
+  ["docs/store/assets/generated/screenshots/01-onboarding.png", [1280, 800]],
+  ["docs/store/assets/generated/screenshots/02-warning.png", [1280, 800]],
+  ["docs/store/assets/generated/screenshots/03-popup-danger.png", [1280, 800]],
+  ["docs/store/assets/generated/screenshots/04-diagnostics.png", [1280, 800]],
+  ["docs/store/assets/generated/screenshots/05-options.png", [1280, 800]]
 ]);
 const pngSignature = "89504e470d0a1a0a";
 

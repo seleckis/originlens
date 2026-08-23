@@ -1,4 +1,4 @@
-# Chrome Web Store submission worksheet — OriginLens v0.1.0
+# Chrome Web Store submission worksheet — OriginLens v0.1.1
 
 This is the authoritative dashboard worksheet for the first publication. It does
 not authorize uploading, submitting, or publishing. Each external action
@@ -16,10 +16,10 @@ requires the approval recorded in the release workflow.
 
 ## Package
 
-- Upload: `dist/originlens-0.1.0-chrome-web-store.zip`
-- Checksum: `dist/originlens-0.1.0-chrome-web-store.zip.sha256`
+- Upload: `dist/originlens-0.1.1-chrome-web-store.zip`
+- Checksum: `dist/originlens-0.1.1-chrome-web-store.zip.sha256`
 - SBOM, kept outside the upload: `dist/SBOM.cdx.json`
-- Expected manifest: Manifest V3, version 0.1.0
+- Expected manifest: Manifest V3, version 0.1.1
 - Upload only bytes that passed all automated and manual gates
 
 ## Store listing
@@ -44,8 +44,9 @@ requires the approval recorded in the release workflow.
   when the user opens the popup.
 - `scripting`: Requests the same bundled, value-blind structural analyzer on
   eligible pages, including a page opened before installation.
-- `storage`: Retains only the explicitly entered optional resolver endpoint,
-  locale, signing key ID, public key, and enabled choice.
+- `storage`: Retains the versioned affirmative protection-consent choice plus
+  only the explicitly entered optional resolver endpoint, locale, signing key
+  ID, public key, and enabled choice.
 - `webNavigation`: Resets per-navigation state, enumerates eligible frames, and
   derives bounded redirect evidence without request-body access.
 - `http://*/*` and `https://*/*`: Runs proactive analysis on ordinary websites
@@ -66,15 +67,22 @@ requires the approval recorded in the release workflow.
 
 No account, credentials, purchase, or form submission is needed.
 
-1. Install the extension and leave the optional resolver disabled.
-2. Open https://fixtures.example.invalid/fixtures/identity-mismatch.html and
-   confirm **Possible phishing page** appears before field entry.
-3. Open `harmful-delayed-login.html`; it starts without a warning and warns when
+1. Install the extension and leave the optional resolver disabled. Confirm the
+   first-run disclosure states **Website content** and **Current browsing
+   activity**, and that analysis remains off until the consent checkbox and
+   **Enable OriginLens protection** are selected.
+2. Before enabling, open
+   https://fixtures.example.invalid/fixtures/identity-mismatch.html and confirm it
+   does not warn. Enable protection and confirm the already-open page displays
+   **Possible phishing page** before field entry.
+3. Disable protection in Options; confirm the warning disappears and Popup says
+   **Protection is off**. Re-enable protection for the remaining steps.
+4. Open `harmful-delayed-login.html`; it starts without a warning and warns when
    the synthetic login form appears.
-4. Open `harmful-click-login.html`; it warns only after **Continue to login**.
-5. Open `unknown-brand-login.html` and `shared-hosting-login.html`; neither may
+5. Open `harmful-click-login.html`; it warns only after **Continue to login**.
+6. Open `unknown-brand-login.html` and `shared-hosting-login.html`; neither may
    show an interrupting warning.
-6. Use only the inert synthetic controls. Do not enter or submit credentials.
+7. Use only the inert synthetic controls. Do not enter or submit credentials.
 
 ## External-state record
 

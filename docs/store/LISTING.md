@@ -1,6 +1,6 @@
-# Chrome Web Store listing — OriginLens v0.1.0
+# Chrome Web Store listing — OriginLens v0.1.1
 
-Status: publication-ready copy for the verified v0.1.0 upload. Copy changes
+Status: publication-ready copy for the verified v0.1.1 upload. Copy changes
 require review against the shipped behavior before submission.
 
 ## Name
@@ -23,6 +23,7 @@ interrupting phishing warning.
 
 OriginLens provides:
 
+- a first-run disclosure and affirmative choice before local page analysis;
 - pre-entry warnings for high-confidence verified-domain mismatches;
 - danger, caution, unknown, and “no strong phishing indicators detected”
   states—never a green “safe” verdict;
@@ -36,6 +37,10 @@ Analysis is local by default. OriginLens never reads values entered into
 password, one-time-code, payment-card, recovery, seed-phrase, private-key, or
 other sensitive fields. It has no analytics or advertising and does not use
 malicious-domain blocklists or reputation APIs.
+
+OriginLens does not analyze website content or current browsing activity until
+you explicitly enable protection. You can disable it at any time in Options;
+doing so stops analysis and clears transient page and navigation state.
 
 The optional resolver sends only a normalized claimed organization and the
 configured locale to the user-selected endpoint. It never receives the visited
@@ -52,6 +57,6 @@ hardware security keys.
 - Homepage: https://github.com/seleckis/originlens
 - Support: https://github.com/seleckis/originlens/issues
 - Privacy policy: https://github.com/seleckis/originlens/blob/main/PRIVACY.md
-- Official verified publisher URL: none for v0.1.0
+- Official verified publisher URL: none for v0.1.1
 - Promotional video: none
 - Marquee promotional tile: none

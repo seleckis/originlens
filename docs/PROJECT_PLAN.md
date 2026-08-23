@@ -47,6 +47,7 @@ optional developer fallback, not the acceptance URL presented to the user.
 | 6     | Dynamic identity resolver                              | Optional self-hostable resolver that receives only normalized organization and locale; signed/cacheable provenance; local fallback.                                |
 | 7     | Optional local ML                                      | Begin only after deterministic-gap review; locally bundled, bounded, offline model with abstention and measured performance.                                       |
 | 8     | Hardening and release candidate                        | Permissions/CSP/supply-chain review, SBOM, reproducibility, privacy/store drafts, accessibility/performance matrix, release packaging.                             |
+| 9     | First-run privacy consent                              | Prominent in-product disclosure and affirmative opt-in before all website-content and browsing-activity handling, plus revocation that clears transient state.     |
 
 ### Stage 0 — repository, architecture, and loadable shell
 
@@ -161,6 +162,22 @@ optional developer fallback, not the acceptance URL presented to the user.
   resolver failure, and extension update/migration.
 - Do not publish to the Chrome Web Store without explicit approval. Create the
   release-candidate tag only after final browser-test confirmation.
+
+### Stage 9 — first-run privacy disclosure and consent
+
+- Keep content-script DOM/identity/behavior analysis and background navigation
+  processing inactive until the user sees a prominent in-product disclosure and
+  affirmatively enables protection.
+- Store only a versioned consent record. A missing, malformed, or older record
+  fails closed to disabled analysis without blocking ordinary browsing.
+- Let the user revoke consent in Options. Revocation removes observers and
+  warnings and clears all transient page, navigation, decision, bypass, and
+  resolver-result state.
+- Keep the optional resolver disabled by default and separately configured.
+- Acceptance: before consent a harmful fixture produces no analysis or warning;
+  enabling protection activates the already-open fixture; disabling protection
+  removes the warning and makes diagnostics unavailable; re-enabling restores
+  normal deterministic protection.
 
 ## Positive identity registry requirements
 

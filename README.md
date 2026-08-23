@@ -6,11 +6,13 @@ OriginLens is an open-source, privacy-first Chrome extension being built to
 detect phishing from identity claims, sensitive-data intent, verified domain
 relationships, and page behavior—not malicious-URL blocklists.
 
-## Current status: v0.1.0 Web Store candidate
+## Current status: v0.1.1 consent-gated Web Store candidate
 
 The current build is a loadable Manifest V3 extension with early local signals.
 It provides:
 
+- a first-run disclosure and affirmative opt-in before website content or
+  current browsing activity is analyzed, with revocation in Options;
 - a popup showing the active page origin;
 - an options page;
 - a local diagnostics view;
@@ -56,13 +58,15 @@ service.
 ## Privacy baseline
 
 The release candidate has a bundled isolated-world content script on HTTP(S)
-pages and eligible child frames. It counts bounded field/form structure and
-matches bounded top-frame identity surfaces locally against known aliases. It
-never accesses field values. Capture-phase focus, input, and submit guards
-inspect only target element structure and event type when a danger decision is
-already active. Only registry IDs, counts, confidence, contexts, decision
-booleans, and evidence codes cross the content boundary; raw page text does not.
-Local storage contains only optional resolver configuration. Network access
+pages and eligible child frames, but it attaches no analyzer or observer until
+the user accepts the first-run local-processing disclosure. After opt-in it
+counts bounded field/form structure and matches bounded top-frame identity
+surfaces locally against known aliases. It never accesses field values.
+Capture-phase focus, input, and submit guards inspect only target element
+structure and event type when a danger decision is already active. Only registry
+IDs, counts, confidence, contexts, decision booleans, and evidence codes cross
+the content boundary; raw page text does not. Local storage contains the
+versioned consent choice and optional resolver configuration. Network access
 occurs only when that resolver is explicitly configured and enabled; its request
 excludes visited location and page content. Current-navigation evidence,
 resolver results/caches, and bypass state are transient and discard paths and
@@ -135,7 +139,7 @@ pnpm store:validate
 pnpm verify:reproducible
 ```
 
-`pnpm package:web-store` creates `dist/originlens-0.1.0-chrome-web-store.zip`.
+`pnpm package:web-store` creates `dist/originlens-0.1.1-chrome-web-store.zip`.
 This is distinct from the nested test-download ZIP and is never uploaded
 automatically. Store listing copy, privacy declarations, assets, permission
 justifications, and reviewer steps are recorded in [docs/store/](docs/store/).

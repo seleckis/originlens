@@ -262,6 +262,15 @@ test.beforeAll(async () => {
       "--host-resolver-rules=MAP fixture.example.test 127.0.0.1,MAP www.swedbank.lv 127.0.0.1"
     ]
   });
+  const worker = await extensionWorker();
+  await worker.evaluate(() =>
+    chrome.storage.local.set({
+      protectionConsent: { enabled: true, version: 1 }
+    })
+  );
+  await new Promise((resolveWait) => setTimeout(resolveWait, 100));
+  for (const page of context.pages())
+    if (page.url().includes("/onboarding.html")) await page.close();
 });
 
 test.afterAll(async () => {
@@ -281,6 +290,115 @@ test.afterAll(async () => {
       error ? rejectServer(error) : resolveServer()
     )
   );
+});
+
+test("requires affirmative consent before page or navigation analysis", async () => {
+  const consentContext = await chromium.launchPersistentContext("", {
+    channel: "chromium",
+    headless: true,
+    args: [
+      `--disable-extensions-except=${extensionPath}`,
+      `--load-extension=${extensionPath}`,
+      "--host-resolver-rules=MAP fixture.example.test 127.0.0.1"
+    ]
+  });
+  try {
+    const consentWorker =
+      consentContext.serviceWorkers()[0] ??
+      (await consentContext.waitForEvent("serviceworker"));
+    const extensionId = new URL(consentWorker.url()).host;
+    const inspected = await consentContext.newPage();
+    await inspected.goto("http://fixture.example.test:4174/identity-mismatch");
+    await inspected.waitForTimeout(600);
+    await expect(inspected.getByRole("alertdialog")).toHaveCount(0);
+
+    const popup = await consentContext.newPage();
+    await popup.goto(`chrome-extension://${extensionId}/popup.html`);
+    await expect(
+      popup.getByRole("heading", {
+        name: "Enable protection when you are ready"
+      })
+    ).toBeVisible();
+    expect(await popup.locator("body").innerText()).not.toContain(
+      "example.test"
+    );
+    const tabId: unknown = await consentWorker.evaluate(() =>
+      chrome.tabs
+        .query({ url: "http://fixture.example.test:4174/*" })
+        .then((tabs) => tabs[0]?.id)
+    );
+    expect(typeof tabId).toBe("number");
+    for (const type of [
+      "originlens.get-structural-summary",
+      "originlens.get-navigation-summary",
+      "originlens.get-decision-summary"
+    ]) {
+      const beforeConsent: unknown = await popup.evaluate(
+        ({ messageType, inspectedTabId }) =>
+          chrome.runtime.sendMessage({
+            type: messageType,
+            tabId: inspectedTabId
+          }),
+        { messageType: type, inspectedTabId: tabId }
+      );
+      expect(beforeConsent ?? undefined).toBeUndefined();
+    }
+
+    const onboarding = await consentContext.newPage();
+    await onboarding.goto(`chrome-extension://${extensionId}/onboarding.html`);
+    await expect(
+      onboarding.getByRole("heading", { name: "Before enabling protection" })
+    ).toBeVisible();
+    await expect(onboarding.getByText("Website content:")).toBeVisible();
+    await expect(
+      onboarding.getByText("Current browsing activity:")
+    ).toBeVisible();
+    const enableButton = onboarding.getByRole("button", {
+      name: "Enable OriginLens protection"
+    });
+    await expect(enableButton).toBeDisabled();
+    await onboarding.getByLabel(/I consent to the local processing/).check();
+    await enableButton.click();
+    await expect(
+      onboarding.getByRole("heading", { name: "Protection is enabled" })
+    ).toBeVisible();
+    await expect(inspected.getByRole("alertdialog")).toBeVisible();
+
+    const options = await consentContext.newPage();
+    await options.goto(`chrome-extension://${extensionId}/options.html`);
+    await options.getByRole("button", { name: "Disable protection" }).click();
+    await expect(
+      options.getByRole("heading", { name: "Protection off" })
+    ).toBeVisible();
+    await expect(inspected.getByRole("alertdialog")).toHaveCount(0);
+    await expect
+      .poll(() =>
+        consentWorker.evaluate(
+          (id) => chrome.action.getTitle({ tabId: id }),
+          tabId as number
+        )
+      )
+      .toContain("protection is off");
+    await expect(
+      onboarding.getByRole("heading", { name: "Before enabling protection" })
+    ).toBeVisible();
+    await expect(
+      onboarding.getByRole("button", {
+        name: "Enable OriginLens protection"
+      })
+    ).toBeDisabled();
+    const stored: unknown = await options.evaluate(
+      (id) =>
+        chrome.runtime.sendMessage({
+          type: "originlens.get-structural-summary",
+          tabId: id
+        }),
+      tabId
+    );
+    expect(stored ?? undefined).toBeUndefined();
+  } finally {
+    await consentContext.close();
+  }
 });
 
 test("reports a sanitized structural aggregate for an inspected page", async () => {
@@ -1034,7 +1152,7 @@ test("loads the release candidate without implicit remote requests or safety cla
       })
     | undefined;
   expect(manifest.manifest_version).toBe(3);
-  expect(manifest.version).toBe("0.1.0");
+  expect(manifest.version).toBe("0.1.1");
   expect(manifest.description).toBe(
     "Local-first phishing warnings using claimed identity, sensitive-data intent, verified domains, and bounded page behavior."
   );

@@ -37,6 +37,7 @@ pnpm verify:reproducible
 
 The Playwright tests launch bundled Chromium with only the production extension
 build enabled. They verify the manifest boundary, nested-frame aggregation,
+first-run consent, pre-consent inactivity, live opt-in, revocation cleanup,
 mutation and SPA updates, current-navigation redirect evidence, sanitized
 summaries, claimed identity, verified and mismatched domains, benign identity
 contexts, bounded behavior, every hosted fixture, multilingual warning and
@@ -54,7 +55,7 @@ flow and the SBOM.
 
 ## Chrome Web Store artifact
 
-`pnpm package:web-store` creates `dist/originlens-0.1.0-chrome-web-store.zip`,
+`pnpm package:web-store` creates `dist/originlens-0.1.1-chrome-web-store.zip`,
 its SHA-256 companion, and an adjacent CycloneDX SBOM. Unlike the test ZIP, the
 upload ZIP has `manifest.json` at its root and contains only production
 extension files.
@@ -87,31 +88,38 @@ The canonical manual Chrome acceptance index is:
 After deploying `originlens-release-candidate.zip`, load its extracted
 `chrome-mv3` directory in Chrome and use only the hosted fixture index above:
 
-1. **Claimed bank identity on a mismatched domain** must display the modal
+1. Before consent, **Claimed bank identity on a mismatched domain** must not be
+   analyzed or warn. Popup must show **Protection is off** without the current
+   origin. Review the first-run disclosure, confirm that the enable button is
+   unavailable until the consent checkbox is selected, then enable protection.
+   The already-open harmful fixture must begin warning. Disable protection in
+   Options; the warning and transient diagnostics must disappear. Re-enable for
+   the remaining checks.
+2. **Claimed bank identity on a mismatched domain** must display the modal
    **Possible phishing page** before manual field entry. It must name Swedbank
    Latvia, show the actual registrable domain `example.invalid`, state that
    sensitive data is requested, focus **Leave this page**, and show a red `!`
    badge.
-2. Tab and Shift+Tab must remain within the warning actions. Choosing **Continue
+3. Tab and Shift+Tab must remain within the warning actions. Choosing **Continue
    anyway** must dismiss the dialog for that navigation while Popup and
    Diagnostics still show `Danger` and a bypassed intervention. Reloading must
    restore the warning.
-3. After bypass, type a fictional marker in the password field without
+4. After bypass, type a fictional marker in the password field without
    submitting. Popup and Diagnostics must never display that marker.
-4. **Unknown-brand login** must not display a modal: sensitive intent alone is
+5. **Unknown-brand login** must not display a modal: sensitive intent alone is
    insufficient. The article, comparison, documentation, customer-logo,
    payment-redirect, and OAuth/SSO fixtures must also remain non-interrupting.
-5. Existing Stage 2 structural fixtures must remain inspectable. No acceptance
+6. Existing Stage 2 structural fixtures must remain inspectable. No acceptance
    step submits any form.
-6. **Potentially harmful delayed bank login** must initially show no modal, then
+7. **Potentially harmful delayed bank login** must initially show no modal, then
    begin showing **Possible phishing page** when the form appears. The click-
    triggered, Latvian, and Russian harmful fixtures must warn;
    canvas/split-text, shared-hosting, articles, comparison, payment, OAuth, and
    documentation fixtures must remain non-interrupting.
-7. Diagnostics must show behavioral evidence/coverage, the optional resolver as
+8. Diagnostics must show behavioral evidence/coverage, the optional resolver as
    disabled by default, and no packaged ML model. Download the sanitized export
    and confirm it contains no visited address or test field marker.
-8. Resolver self-hosting is a separate optional check documented in
+9. Resolver self-hosting is a separate optional check documented in
    [IDENTITY_RESOLVER.md](IDENTITY_RESOLVER.md); disabling or disconnecting it
    must leave local analysis functional.
 

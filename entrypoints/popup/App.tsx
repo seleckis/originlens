@@ -28,6 +28,11 @@ import {
 import type { NavigationSummary } from "../../lib/navigation-analysis";
 import type { DisplayOrigin } from "../../lib/origin";
 import type { UrlAnalysis } from "../../lib/url-analysis";
+import {
+  isProtectionConsent,
+  isProtectionEnabled,
+  PROTECTION_CONSENT_KEY
+} from "../../lib/protection-consent";
 
 const initialOrigin: DisplayOrigin = {
   kind: "unavailable",
@@ -43,8 +48,34 @@ export default function App() {
   const [identity, setIdentity] = useState<IdentityAssessment>();
   const [decision, setDecision] = useState<DecisionSummary>();
   const [behavior, setBehavior] = useState<BehaviorSummary>();
+  const [protectionEnabled, setProtectionEnabled] = useState<boolean>();
 
   useEffect(() => {
+    const onStorageChanged = (
+      changes: Record<string, Browser.storage.StorageChange>,
+      areaName: string
+    ) => {
+      if (areaName !== "local" || !(PROTECTION_CONSENT_KEY in changes)) return;
+      setProtectionEnabled(
+        isProtectionConsent(changes[PROTECTION_CONSENT_KEY]?.newValue)
+      );
+    };
+    browser.storage.onChanged.addListener(onStorageChanged);
+    void isProtectionEnabled().then(setProtectionEnabled);
+    return () => browser.storage.onChanged.removeListener(onStorageChanged);
+  }, []);
+
+  useEffect(() => {
+    if (!protectionEnabled) {
+      setOrigin(initialOrigin);
+      setAnalysis(initialAnalysis);
+      setSummary(undefined);
+      setNavigation(undefined);
+      setIdentity(undefined);
+      setDecision(undefined);
+      setBehavior(undefined);
+      return;
+    }
     void getCurrentOrigin().then(setOrigin);
     void getCurrentUrlAnalysis().then(setAnalysis);
     void getCurrentNavigationSummary().then(setNavigation);
@@ -60,7 +91,7 @@ export default function App() {
     void getCurrentStructuralSummary()
       .then(setSummary)
       .catch(() => undefined);
-  }, []);
+  }, [protectionEnabled]);
 
   const openDiagnostics = async () => {
     const [tab] = await browser.tabs.query({
@@ -79,6 +110,57 @@ export default function App() {
   const openOptions = async () => {
     await browser.runtime.openOptionsPage();
   };
+
+  const openOnboarding = async () => {
+    await browser.tabs.create({
+      url: browser.runtime.getURL("/onboarding.html")
+    });
+  };
+
+  if (!protectionEnabled) {
+    return (
+      <main className="popup shell">
+        <header className="brand">
+          <img className="brand-mark" src="/icon/128.png" alt="" />
+          <div>
+            <h1 className="brand-name">OriginLens</h1>
+            <p className="tagline">See who a site really is.</p>
+          </div>
+        </header>
+        <section className="setup-card card" aria-labelledby="setup-heading">
+          <p className="eyebrow">Protection is off</p>
+          <h2 id="setup-heading">
+            {protectionEnabled === undefined
+              ? "Checking your choice…"
+              : "Enable protection when you are ready"}
+          </h2>
+          <p>
+            {protectionEnabled === undefined
+              ? "OriginLens will remain inactive unless you have explicitly enabled it."
+              : "OriginLens is not analyzing website content or current browsing activity. Review the local-processing disclosure before choosing whether to enable it."}
+          </p>
+          {protectionEnabled === false && (
+            <button
+              className="button primary"
+              type="button"
+              onClick={() => void openOnboarding()}
+            >
+              Review and enable
+            </button>
+          )}
+        </section>
+        <footer className="popup-actions">
+          <button
+            className="button"
+            type="button"
+            onClick={() => void openOptions()}
+          >
+            Options
+          </button>
+        </footer>
+      </main>
+    );
+  }
 
   return (
     <main className="popup shell">
