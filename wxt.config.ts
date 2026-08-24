@@ -6,7 +6,7 @@ export default defineConfig({
     name: "OriginLens",
     description:
       "Local-first phishing warnings using claimed identity, sensitive-data intent, verified domains, and bounded page behavior.",
-    permissions: ["activeTab", "scripting", "storage", "webNavigation"],
+    permissions: ["scripting", "storage", "webNavigation"],
     host_permissions: ["http://*/*", "https://*/*"],
     icons: {
       16: "icon/16.png",

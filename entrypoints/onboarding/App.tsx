@@ -81,8 +81,8 @@ export default function App() {
         ) : (
           <>
             <p className="lead">
-              Until you enable it, OriginLens does not analyze website content
-              or your current browsing activity.
+              Until you enable it, OriginLens does not analyze website content,
+              web history, or user activity.
             </p>
 
             <div className="disclosure" aria-label="Local data processing">
@@ -94,9 +94,16 @@ export default function App() {
                   destination categories.
                 </li>
                 <li>
-                  <strong>Current browsing activity:</strong> the current origin
-                  and registrable domain, eligible frames, and bounded redirect
-                  facts for the active navigation.
+                  <strong>Web history:</strong> only the current origin and
+                  registrable domain, eligible frames, and bounded redirect
+                  facts for the active navigation. OriginLens does not create or
+                  retain a browsing-history list.
+                </li>
+                <li>
+                  <strong>User activity:</strong> bounded click event target
+                  structure and, only after a danger decision, focus, input, and
+                  submit event types and target structure. OriginLens never
+                  reads keystrokes, pointer coordinates, or field values.
                 </li>
               </ul>
               <h3>Why</h3>
@@ -108,11 +115,11 @@ export default function App() {
               <h3>Privacy boundaries</h3>
               <p>
                 Analysis stays on your device by default. OriginLens does not
-                retain or transmit page content or browsing activity, and never
-                reads values entered into password, OTP, payment, recovery,
-                seed-phrase, private-key, or other form fields. The optional
-                self-hosted resolver remains disabled and requires separate
-                configuration.
+                retain or transmit website content, web history, or user
+                activity, and never reads values entered into password, OTP,
+                payment, recovery, seed-phrase, private-key, or other form
+                fields. The optional self-hosted resolver remains disabled and
+                requires separate configuration.
               </p>
             </div>
 
@@ -122,8 +129,8 @@ export default function App() {
                 checked={acknowledged}
                 onChange={(event) => setAcknowledged(event.target.checked)}
               />
-              I consent to the local processing of website content and current
-              browsing activity described above.
+              I consent to the local processing of website content, web history,
+              and user activity described above.
             </label>
 
             <div className="consent-actions">

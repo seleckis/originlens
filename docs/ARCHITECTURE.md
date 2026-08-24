@@ -6,7 +6,7 @@ OriginLens is a Chrome Manifest V3 extension built with WXT, strict TypeScript,
 and React.
 
 ```text
-first-run disclosure ── explicit consent ── versioned storage.local record
+first-run disclosure ── explicit consent v2 ── versioned storage.local record
                                       │
                                       ▼
 hostile page/frame DOM
@@ -32,10 +32,13 @@ click handlers, identity extraction, or reports. The service worker likewise
 ignores navigation events and returns no page-analysis state before consent.
 
 After opt-in, content scripts report at most 32 bounded frame summaries. A frame
-tracker caps behavior events at 64. Closed shadow roots, inaccessible/excess
-frames, canvas text, arbitrary JavaScript data flow, and request bodies are not
-treated as benign; supported limits produce explicit partial/unknown evidence.
-Sensitive field values are never read.
+tracker caps behavior events at 64. It observes only bounded click target
+structure and DOM changes; danger-only focus, `beforeinput`, and submit guards
+inspect event type and target structure. They never inspect keystrokes, pointer
+coordinates, or field values. Closed shadow roots, inaccessible/excess frames,
+canvas text, arbitrary JavaScript data flow, and request bodies are not treated
+as benign; supported limits produce explicit partial/unknown evidence. Sensitive
+field values are never read.
 
 The top frame scans at most 64 selected identity strings, each capped at 160
 characters and 32 text nodes. It matches them locally against registry aliases
@@ -75,6 +78,7 @@ the service worker. Failure preserves the bundled local decision.
 - Sanitized exports omit visited locations, resolver endpoints, raw content,
   field values, and history.
 - Build output is budgeted, has a CycloneDX SBOM, and is packaged reproducibly.
-- Every permission increase requires an ADR. Current permissions are
-  `activeTab`, `scripting`, `storage`, and `webNavigation`, with HTTP(S) host
-  access needed for proactive all-frame analysis.
+- Every permission increase requires an ADR. Current API permissions are
+  `scripting`, `storage`, and `webNavigation`, with HTTP(S) host access needed
+  for proactive all-frame analysis. `activeTab` is deliberately absent because
+  Chrome documents it as redundant when broad host access already exists.

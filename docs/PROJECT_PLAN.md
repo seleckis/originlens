@@ -179,6 +179,26 @@ optional developer fallback, not the acceptance URL presented to the user.
   removes the warning and makes diagnostics unavailable; re-enabling restores
   normal deterministic protection.
 
+### Stage 10 — complete disclosure and minimum-permission correction
+
+- Treat bounded click target facts and danger-only focus, `beforeinput`, and
+  submit event types/target structure as Chrome Web Store **User activity**, in
+  addition to **Website content** and **Web history**.
+- Advance the versioned consent schema so v0.1.1 consent cannot authorize the
+  newly explicit disclosure. Keep all three categories inactive until the user
+  reviews and accepts the version 2 disclosure.
+- Remove `activeTab`; Chrome documents it as unnecessary when the extension
+  already has broad host access. Retain HTTP(S) host access because proactive
+  pre-entry detection cannot wait for an extension-icon gesture or be limited to
+  predetermined sites.
+- Make the privacy worksheet field-complete: single purpose, `scripting`,
+  `storage`, `webNavigation`, Host permission, data-category selections, all
+  three data-use certifications, remote-code answer, and privacy-policy URL.
+- Acceptance: a version 1 consent record remains inactive; onboarding names
+  Website content, Web history, and User activity and requires a new checkbox;
+  the manifest omits `activeTab` but retains HTTP(S) host access; consent,
+  warning, revocation, benign, and live-bank regressions remain unchanged.
+
 ## Positive identity registry requirements
 
 The registry is not a malicious-domain list. Each record must be versioned and

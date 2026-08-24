@@ -76,10 +76,13 @@ script. A deliberate bypass is transient for the current navigation and never
 changes the danger decision. Badge, popup, and diagnostics remain independently
 inspectable if page intervention is disrupted.
 
-Behavior tracking observes only bounded DOM/event facts. Page code can hide
-identity in canvas/closed roots, construct exfiltration outside forms, or race
-mutation delivery. These cases do not become benign. OriginLens never sees
-request bodies, clipboard contents, permission outcomes, or managed downloads.
+Behavior tracking observes only bounded DOM/event facts after version 2 consent:
+click target structure plus danger-only focus, `beforeinput`, and submit event
+types and target structure. It never reads keystrokes, pointer coordinates, or
+field values. Page code can hide identity in canvas/closed roots, construct
+exfiltration outside forms, or race mutation delivery. These cases do not become
+benign. OriginLens never sees request bodies, clipboard contents, permission
+outcomes, or managed downloads.
 
 The optional resolver adds response poisoning, replay, endpoint compromise,
 traffic analysis, and availability threats. It is disabled by default, sends no

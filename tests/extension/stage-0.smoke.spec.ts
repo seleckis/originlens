@@ -265,7 +265,7 @@ test.beforeAll(async () => {
   const worker = await extensionWorker();
   await worker.evaluate(() =>
     chrome.storage.local.set({
-      protectionConsent: { enabled: true, version: 1 }
+      protectionConsent: { enabled: true, version: 2 }
     })
   );
   await new Promise((resolveWait) => setTimeout(resolveWait, 100));
@@ -307,6 +307,11 @@ test("requires affirmative consent before page or navigation analysis", async ()
       consentContext.serviceWorkers()[0] ??
       (await consentContext.waitForEvent("serviceworker"));
     const extensionId = new URL(consentWorker.url()).host;
+    await consentWorker.evaluate(() =>
+      chrome.storage.local.set({
+        protectionConsent: { enabled: true, version: 1 }
+      })
+    );
     const inspected = await consentContext.newPage();
     await inspected.goto("http://fixture.example.test:4174/identity-mismatch");
     await inspected.waitForTimeout(600);
@@ -350,9 +355,9 @@ test("requires affirmative consent before page or navigation analysis", async ()
       onboarding.getByRole("heading", { name: "Before enabling protection" })
     ).toBeVisible();
     await expect(onboarding.getByText("Website content:")).toBeVisible();
-    await expect(
-      onboarding.getByText("Current browsing activity:")
-    ).toBeVisible();
+    await expect(onboarding.getByText("Web history:")).toBeVisible();
+    await expect(onboarding.getByText("User activity:")).toBeVisible();
+    await expect(onboarding.getByText(/never reads keystrokes/)).toBeVisible();
     const enableButton = onboarding.getByRole("button", {
       name: "Enable OriginLens protection"
     });
@@ -362,6 +367,15 @@ test("requires affirmative consent before page or navigation analysis", async ()
     await expect(
       onboarding.getByRole("heading", { name: "Protection is enabled" })
     ).toBeVisible();
+    await expect
+      .poll(() =>
+        consentWorker.evaluate(() =>
+          chrome.storage.local
+            .get("protectionConsent")
+            .then(({ protectionConsent }) => protectionConsent)
+        )
+      )
+      .toEqual({ enabled: true, version: 2 });
     await expect(inspected.getByRole("alertdialog")).toBeVisible();
 
     const options = await consentContext.newPage();
@@ -1152,12 +1166,11 @@ test("loads the release candidate without implicit remote requests or safety cla
       })
     | undefined;
   expect(manifest.manifest_version).toBe(3);
-  expect(manifest.version).toBe("0.1.1");
+  expect(manifest.version).toBe("0.1.2");
   expect(manifest.description).toBe(
     "Local-first phishing warnings using claimed identity, sensitive-data intent, verified domains, and bounded page behavior."
   );
   expect(manifest.permissions).toEqual([
-    "activeTab",
     "scripting",
     "storage",
     "webNavigation"

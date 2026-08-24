@@ -1,8 +1,8 @@
 # OriginLens privacy policy
 
-Effective: 2026-08-23
+Effective: 2026-08-24
 
-Applies to: OriginLens v0.1.1
+Applies to: OriginLens v0.1.2
 
 OriginLens is a local-first phishing-analysis browser extension. This policy
 explains the information the extension handles, how it is used, and what never
@@ -10,11 +10,11 @@ happens to it.
 
 ## Your consent and control
 
-OriginLens does not analyze website content or current web-browsing activity
-until its first-run disclosure is shown and you affirmatively select **Enable
-OriginLens protection**. The consent record is versioned so a future material
-change can require a new disclosure and choice instead of silently preserving
-old consent.
+OriginLens does not analyze website content, web history, or user activity until
+its first-run disclosure is shown and you affirmatively select **Enable
+OriginLens protection**. Version 2 consent replaces version 1 so the addition of
+the explicit User activity disclosure requires a new choice instead of silently
+preserving older consent.
 
 You can withdraw consent at any time with **Disable protection** in Options.
 Revocation removes active page observers and warnings and clears transient
@@ -24,16 +24,21 @@ and enable it again.
 
 ## Information handled on your device
 
-OriginLens processes two Chrome Web Store user-data categories locally because
+OriginLens processes three Chrome Web Store user-data categories locally because
 they are necessary for its visible phishing-analysis feature:
 
 - **Website content and resources:** bounded selected strings from titles,
   headings, metadata, accessible image labels, and other high-salience surfaces;
   structural attributes and types for forms and controls; and bounded page
   behavior and destination categories.
-- **Current web-browsing activity:** the active page origin, registrable domain,
-  eligible frame structure, and at most eight bounded redirect origins for the
-  current top-level navigation.
+- **Web history (current web-browsing activity):** the active page origin,
+  registrable domain, eligible frame structure, and at most eight bounded
+  redirect origins for the current top-level navigation.
+- **User activity:** bounded click event target structure used to detect a
+  click-triggered sensitive-form insertion and, only while a danger decision is
+  active, focus, `beforeinput`, and submit event types and target structure used
+  to show the warning before sensitive entry. OriginLens never reads keystrokes,
+  pointer coordinates, or field values.
 
 Raw page strings remain inside the isolated content script. The background
 receives only registry identifiers, bounded counts, classifications, decision
@@ -57,9 +62,9 @@ integration.
 
 Locally processed information is used only to display OriginLens's current
 origin, phishing-analysis state, warning intervention, and inspectable evidence.
-The extension never displays a green “safe” verdict. Current-navigation
-evidence, warning-bypass state, resolver results, and resolver cache entries are
-transient.
+The extension never displays a green “safe” verdict. Current-navigation and
+user-activity evidence, warning-bypass state, resolver results, and resolver
+cache entries are transient.
 
 Capture-phase focus, `beforeinput`, and submit guards run only after a danger
 decision. They inspect event type and target structure, never typed data.

@@ -43,9 +43,9 @@ const checks = [
   },
   {
     label: "Required permissions",
-    value: "activeTab, scripting, storage, and webNavigation",
+    value: "scripting, storage, and webNavigation",
     detail:
-      "Current-tab analysis, packaged injection, local settings, and bounded redirects"
+      "Packaged injection, local settings, and bounded navigation evidence"
   },
   {
     label: "Network",
@@ -168,8 +168,8 @@ export default function App() {
         </h2>
         <p className="muted">
           {protectionEnabled
-            ? "Current-tab diagnostics are available because local page and browsing-activity processing was explicitly enabled."
-            : "No website content or current browsing activity is analyzed until the first-run disclosure is accepted."}
+            ? "Current-tab diagnostics are available because local website-content, web-history, and user-activity processing was explicitly enabled."
+            : "No website content, web history, or user activity is analyzed until the first-run disclosure is accepted."}
         </p>
       </section>
       <section className="diagnostics-card card" aria-labelledby="build-facts">

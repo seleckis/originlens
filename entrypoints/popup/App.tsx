@@ -137,7 +137,7 @@ export default function App() {
           <p>
             {protectionEnabled === undefined
               ? "OriginLens will remain inactive unless you have explicitly enabled it."
-              : "OriginLens is not analyzing website content or current browsing activity. Review the local-processing disclosure before choosing whether to enable it."}
+              : "OriginLens is not analyzing website content, web history, or user activity. Review the local-processing disclosure before choosing whether to enable it."}
           </p>
           {protectionEnabled === false && (
             <button

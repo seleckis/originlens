@@ -31,7 +31,7 @@ test.describe("verified Latvian bank smoke checks", () => {
     const worker = await extensionWorker();
     await worker.evaluate(() =>
       chrome.storage.local.set({
-        protectionConsent: { enabled: true, version: 1 }
+        protectionConsent: { enabled: true, version: 2 }
       })
     );
   });

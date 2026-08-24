@@ -1,6 +1,6 @@
 # Chrome Web Store publication requirements
 
-Reviewed: 2026-08-23
+Reviewed: 2026-08-24
 
 ## Primary sources
 
@@ -10,6 +10,7 @@ Reviewed: 2026-08-23
 - [Store listing fields](https://developer.chrome.com/docs/webstore/cws-dashboard-listing)
 - [Store image requirements](https://developer.chrome.com/docs/webstore/images)
 - [Privacy practices](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy)
+- [Excessive-permissions troubleshooting](https://developer.chrome.com/docs/webstore/troubleshooting/#excessive-permissions)
 - [User Data FAQ](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq)
 - [2026 Chrome Web Store policy updates](https://developer.chrome.com/blog/cws-policy-updates-2026)
 - [Distribution settings](https://developer.chrome.com/docs/webstore/cws-dashboard-distribution)
@@ -24,6 +25,10 @@ Reviewed: 2026-08-23
   promotional tile and at least one 1280×800 or 640×400 screenshot.
 - Permission, host-access, single-purpose, remote-code, and user-data answers
   must match the exact uploaded artifact.
+- Chrome's privacy form defines **User activity** to include clicks and similar
+  interaction facts. OriginLens therefore discloses its bounded click target
+  handling and danger-only focus, `beforeinput`, and submit event/target facts
+  even though it never reads values, keystrokes, or pointer coordinates.
 - Chrome Web Store policy treats website content and current browsing activity
   as handled user data even when processing and storage remain entirely local.
   OriginLens must disclose those categories without claiming that it retains or
@@ -38,6 +43,10 @@ Reviewed: 2026-08-23
   can revoke consent in Options, which stops active analysis and clears
   transient page/navigation state. This is required even though default
   processing is local and value-blind.
+- Chrome's excessive-permissions guidance says `activeTab` is not required when
+  broad host access is already present. OriginLens removes `activeTab` while
+  retaining HTTP(S) host access: an icon-click grant or predetermined site list
+  cannot provide proactive warnings on arbitrary phishing origins.
 - A public item can use deferred publishing after review. Upload, submission,
   and the final publish action remain separate OriginLens approval gates.
 

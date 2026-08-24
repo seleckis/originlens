@@ -4,7 +4,7 @@ The canonical brand mark and promotional tile sources are committed under
 `assets/brand/` and `docs/store/assets/source/`. Generated PNG assets are
 created with `pnpm store:assets` using the bundled Playwright Chromium version.
 
-The screenshots show the actual v0.1.1 extension running against synthetic,
+The screenshots show the actual v0.1.2 extension running against synthetic,
 credential-free fixtures. They must be regenerated and reviewed whenever the
 relevant interface or brand assets change. Do not add third-party logos, real
 credentials, personal data, or claims that OriginLens proves a site is safe.

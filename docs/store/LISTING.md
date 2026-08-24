@@ -1,6 +1,6 @@
-# Chrome Web Store listing — OriginLens v0.1.1
+# Chrome Web Store listing — OriginLens v0.1.2
 
-Status: publication-ready copy for the verified v0.1.1 upload. Copy changes
+Status: publication-ready copy for the verified v0.1.2 upload. Copy changes
 require review against the shipped behavior before submission.
 
 ## Name
@@ -38,9 +38,12 @@ password, one-time-code, payment-card, recovery, seed-phrase, private-key, or
 other sensitive fields. It has no analytics or advertising and does not use
 malicious-domain blocklists or reputation APIs.
 
-OriginLens does not analyze website content or current browsing activity until
-you explicitly enable protection. You can disable it at any time in Options;
-doing so stops analysis and clears transient page and navigation state.
+OriginLens does not analyze website content, web history, or user activity until
+you explicitly enable protection. User activity is limited to bounded event
+types and target structure needed for click-triggered detection and pre-entry
+intervention; it never includes keystrokes, pointer coordinates, or field
+values. You can disable protection at any time in Options; doing so stops
+analysis and clears transient page, navigation, and activity state.
 
 The optional resolver sends only a normalized claimed organization and the
 configured locale to the user-selected endpoint. It never receives the visited
@@ -57,6 +60,6 @@ hardware security keys.
 - Homepage: https://github.com/seleckis/originlens
 - Support: https://github.com/seleckis/originlens/issues
 - Privacy policy: https://github.com/seleckis/originlens/blob/main/PRIVACY.md
-- Official verified publisher URL: none for v0.1.1
+- Official verified publisher URL: none for v0.1.2
 - Promotional video: none
 - Marquee promotional tile: none

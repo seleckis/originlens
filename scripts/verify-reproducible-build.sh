@@ -4,7 +4,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 test_artifact="$repo_root/dist/originlens-release-candidate.zip"
-store_artifact="$repo_root/dist/originlens-0.1.1-chrome-web-store.zip"
+store_artifact="$repo_root/dist/originlens-0.1.2-chrome-web-store.zip"
 
 SOURCE_DATE_EPOCH=1704067200 "$repo_root/scripts/package-test-download.sh"
 SOURCE_DATE_EPOCH=1704067200 "$repo_root/scripts/package-web-store.sh"

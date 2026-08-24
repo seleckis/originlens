@@ -154,7 +154,7 @@ try {
   await onboarding.close();
   await worker.evaluate(() =>
     globalThis.chrome.storage.local.set({
-      protectionConsent: { enabled: true, version: 1 }
+      protectionConsent: { enabled: true, version: 2 }
     })
   );
   const inspected = await context.newPage();

@@ -1,5 +1,5 @@
 export const PROTECTION_CONSENT_KEY = "protectionConsent";
-export const PROTECTION_CONSENT_VERSION = 1 as const;
+export const PROTECTION_CONSENT_VERSION = 2 as const;
 
 export interface ProtectionConsent {
   enabled: true;

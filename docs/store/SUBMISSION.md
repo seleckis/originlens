@@ -1,4 +1,4 @@
-# Chrome Web Store submission worksheet — OriginLens v0.1.1
+# Chrome Web Store submission worksheet — OriginLens v0.1.2
 
 This is the authoritative dashboard worksheet for the first publication. It does
 not authorize uploading, submitting, or publishing. Each external action
@@ -16,10 +16,10 @@ requires the approval recorded in the release workflow.
 
 ## Package
 
-- Upload: `dist/originlens-0.1.1-chrome-web-store.zip`
-- Checksum: `dist/originlens-0.1.1-chrome-web-store.zip.sha256`
+- Upload: `dist/originlens-0.1.2-chrome-web-store.zip`
+- Checksum: `dist/originlens-0.1.2-chrome-web-store.zip.sha256`
 - SBOM, kept outside the upload: `dist/SBOM.cdx.json`
-- Expected manifest: Manifest V3, version 0.1.1
+- Expected manifest: Manifest V3, version 0.1.2
 - Upload only bytes that passed all automated and manual gates
 
 ## Store listing
@@ -33,26 +33,18 @@ requires the approval recorded in the release workflow.
 - Privacy: https://github.com/seleckis/originlens/blob/main/PRIVACY.md
 - Store icon: packaged `icon/128.png`
 - Small promo tile: `assets/generated/promo-440x280.png`
-- Screenshots, in order: all four files under `assets/generated/screenshots/`
+- Screenshots, in order: all five files under `assets/generated/screenshots/`:
+  `01-onboarding.png`, `02-warning.png`, `03-popup-danger.png`,
+  `04-diagnostics.png`, and `05-options.png`
 - Promotional video and marquee tile: leave empty
 
 ## Privacy practices
 
-- Single purpose and data-use selections: copy exactly from
-  `PRIVACY_DISCLOSURE.md`
-- `activeTab`: Displays the active page origin and current OriginLens result
-  when the user opens the popup.
-- `scripting`: Requests the same bundled, value-blind structural analyzer on
-  eligible pages, including a page opened before installation.
-- `storage`: Retains the versioned affirmative protection-consent choice plus
-  only the explicitly entered optional resolver endpoint, locale, signing key
-  ID, public key, and enabled choice.
-- `webNavigation`: Resets per-navigation state, enumerates eligible frames, and
-  derives bounded redirect evidence without request-body access.
-- `http://*/*` and `https://*/*`: Runs proactive analysis on ordinary websites
-  and eligible frames before sensitive-data entry. It excludes restricted
-  browser pages and never grants access to field values.
-- Remote code: No.
+- Copy the single purpose, every permission justification, all data-category
+  selections, all three data-use certifications, remote-code answer, and
+  privacy-policy URL exactly from `PRIVACY_DISCLOSURE.md`.
+- Confirm the uploaded package does not display an `activeTab` justification
+  field. If it does, the wrong package was uploaded.
 
 ## Distribution
 
@@ -68,7 +60,7 @@ requires the approval recorded in the release workflow.
 No account, credentials, purchase, or form submission is needed.
 
 1. Install the extension and leave the optional resolver disabled. Confirm the
-   first-run disclosure states **Website content** and **Current browsing
+   first-run disclosure states **Website content**, **Web history**, and **User
    activity**, and that analysis remains off until the consent checkbox and
    **Enable OriginLens protection** are selected.
 2. Before enabling, open

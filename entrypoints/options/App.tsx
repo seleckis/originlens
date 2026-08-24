@@ -140,7 +140,7 @@ export default function App() {
       await revokeProtectionConsent();
       setProtectionEnabled(false);
       setProtectionMessage(
-        "Protection disabled. Website content and current browsing activity are no longer analyzed."
+        "Protection disabled. Website content, web history, and user activity are no longer analyzed."
       );
     } catch {
       setProtectionMessage(
@@ -169,8 +169,8 @@ export default function App() {
         </h2>
         <p className="muted">
           {protectionEnabled
-            ? "OriginLens locally analyzes the website content and current browsing activity described in the first-run disclosure. It never reads form values."
-            : "OriginLens does not analyze website content or current browsing activity until you review the disclosure and explicitly enable protection."}
+            ? "OriginLens locally analyzes the website content, web history, and user activity described in the first-run disclosure. It never reads form values."
+            : "OriginLens does not analyze website content, web history, or user activity until you review the disclosure and explicitly enable protection."}
         </p>
         <div className="button-row">
           {protectionEnabled ? (

@@ -55,7 +55,7 @@ flow and the SBOM.
 
 ## Chrome Web Store artifact
 
-`pnpm package:web-store` creates `dist/originlens-0.1.1-chrome-web-store.zip`,
+`pnpm package:web-store` creates `dist/originlens-0.1.2-chrome-web-store.zip`,
 its SHA-256 companion, and an adjacent CycloneDX SBOM. Unlike the test ZIP, the
 upload ZIP has `manifest.json` at its root and contains only production
 extension files.
@@ -90,11 +90,13 @@ After deploying `originlens-release-candidate.zip`, load its extracted
 
 1. Before consent, **Claimed bank identity on a mismatched domain** must not be
    analyzed or warn. Popup must show **Protection is off** without the current
-   origin. Review the first-run disclosure, confirm that the enable button is
-   unavailable until the consent checkbox is selected, then enable protection.
-   The already-open harmful fixture must begin warning. Disable protection in
-   Options; the warning and transient diagnostics must disappear. Re-enable for
-   the remaining checks.
+   origin. Review the first-run disclosure and confirm it separately names
+   **Website content**, **Web history**, and **User activity**, including the
+   limits on event handling. Confirm that the enable button is unavailable until
+   the consent checkbox is selected, then enable protection. The already-open
+   harmful fixture must begin warning. Disable protection in Options; the
+   warning and transient diagnostics must disappear. Re-enable for the remaining
+   checks.
 2. **Claimed bank identity on a mismatched domain** must display the modal
    **Possible phishing page** before manual field entry. It must name Swedbank
    Latvia, show the actual registrable domain `example.invalid`, state that

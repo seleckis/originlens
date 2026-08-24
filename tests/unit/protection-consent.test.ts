@@ -16,7 +16,8 @@ describe("protection consent", () => {
     });
     expect(isProtectionConsent(enabledProtectionConsent)).toBe(true);
     expect(isProtectionConsent(undefined)).toBe(false);
-    expect(isProtectionConsent({ enabled: false, version: 1 })).toBe(false);
+    expect(isProtectionConsent({ enabled: false, version: 2 })).toBe(false);
+    expect(isProtectionConsent({ enabled: true, version: 1 })).toBe(false);
     expect(isProtectionConsent({ enabled: true, version: 0 })).toBe(false);
     expect(isProtectionConsent(true)).toBe(false);
   });

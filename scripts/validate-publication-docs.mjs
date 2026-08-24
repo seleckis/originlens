@@ -25,7 +25,8 @@ for (const key of ["listing", "disclosures", "submission"])
 
 for (const phrase of [
   "Website content",
-  "Current web-browsing activity",
+  "Web history",
+  "User activity",
   "never reads, retains, logs, transmits, hashes, or inspects values",
   "no telemetry, analytics, advertising, or reputation API",
   "Limited Use requirements"
@@ -33,16 +34,44 @@ for (const phrase of [
   if (!contents.privacy.includes(phrase))
     throw new Error(`PRIVACY.md is missing required disclosure: ${phrase}`);
 
-for (const permission of [
-  "`activeTab`",
-  "`scripting`",
-  "`storage`",
-  "`webNavigation`",
-  "`http://*/*`",
-  "`https://*/*`"
+for (const field of [
+  "scripting justification",
+  "storage justification",
+  "webNavigation justification",
+  "Host permission justification"
 ])
-  if (!contents.submission.includes(permission))
-    throw new Error(`Submission worksheet does not justify ${permission}`);
+  if (!contents.disclosures.includes(field))
+    throw new Error(`Privacy worksheet does not provide ${field}`);
+
+for (const category of ["Web history", "User activity", "Website content"])
+  if (!contents.disclosures.includes(`**${category}:**`))
+    throw new Error(`Privacy worksheet does not select ${category}`);
+
+for (const category of [
+  "Personally identifiable information",
+  "Health information",
+  "Financial and payment information",
+  "Authentication information",
+  "Personal communications",
+  "Location"
+])
+  if (!contents.disclosures.includes(`**${category}**`))
+    throw new Error(`Privacy worksheet does not reject ${category}`);
+
+for (const certification of [
+  "I do not sell user data to third parties",
+  "I do not use or transfer user data for purposes that are unrelated",
+  "I do not use or transfer user data to determine creditworthiness"
+])
+  if (!contents.disclosures.includes(certification))
+    throw new Error(`Privacy worksheet is missing: ${certification}`);
+
+if (!contents.disclosures.includes("redundant permission"))
+  throw new Error("Privacy worksheet does not explain activeTab removal");
+if (!contents.disclosures.includes("optional user-configured HTTPS resolver"))
+  throw new Error("Host justification does not disclose resolver access");
+if (!contents.submission.includes("all five files"))
+  throw new Error("Submission worksheet must require all five screenshots");
 
 for (const obsolete of [
   "docs/store/LISTING_DRAFT.md",
@@ -56,9 +85,9 @@ if (!contents.submission.includes("Publishing: deferred after review"))
 
 const consentRequirements = {
   listing:
-    "does not analyze website content or current browsing activity until",
+    "does not analyze website content, web history, or user activity until",
   privacy:
-    "does not analyze website content or current web-browsing activity until",
+    "does not analyze website content, web history, or user activity until",
   disclosures: "Enable OriginLens protection",
   submission: "Enable OriginLens protection"
 };
