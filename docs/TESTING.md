@@ -13,7 +13,7 @@ a verified legitimate bank is release-blocking.
    changes.
 5. Browser-extension integration tests using Playwright and isolated loopback
    fixtures.
-6. Real-browser manual acceptance at every stage using the hosted fixture index.
+6. Real-browser manual acceptance at every stage using loopback-only fixtures.
 7. Optional nondestructive live-bank smoke tests.
 
 These categories remain separately selectable as they are introduced. Normal CI
@@ -40,7 +40,7 @@ build enabled. They verify the manifest boundary, nested-frame aggregation,
 first-run consent, pre-consent inactivity, live opt-in, revocation cleanup,
 mutation and SPA updates, current-navigation redirect evidence, sanitized
 summaries, claimed identity, verified and mismatched domains, benign identity
-contexts, bounded behavior, every hosted fixture, multilingual warning and
+contexts, bounded behavior, every synthetic fixture, multilingual warning and
 non-warning cases, signed resolver/local comparison, resolver failure, sanitized
 exports, explicit three-gate decisions, badge state, warning timing, keyboard
 focus, bypass/reset behavior, and false-positive cases for verified and unknown
@@ -66,11 +66,6 @@ dimensions, description length, source-map exclusion, SBOM exclusion, and the
 absence of remotely loaded scripts. Reproducibility testing compares both the
 manual-test and Web Store artifacts across consecutive builds.
 
-`pnpm deploy:test-download` additionally installs the static artifact and the
-Nginx vhost on the local host. It exposes the ZIP, checksum, and separately
-addressable fixture site at the documented HTTPS URLs. The site root and other
-paths return 404. This is a test distribution, not Chrome Web Store publication.
-
 ## Fixture safety
 
 Synthetic phishing uses fake credentials. If form submission is ever needed, it
@@ -79,14 +74,15 @@ them. Tests never submit credentials to a live site, bypass CAPTCHA or access
 controls, or retain cookies, tokens, query parameters, screenshots, or personal
 information in diagnostics.
 
-The canonical manual Chrome acceptance index is:
+Start the loopback-only manual fixture server with `pnpm test:fixtures`. The
+manual Chrome acceptance index is:
 
-`https://fixtures.example.invalid/fixtures/`
+`http://127.0.0.1:4173/`
 
-### Release-candidate hosted acceptance
+### Local release-candidate acceptance
 
-After deploying `originlens-release-candidate.zip`, load its extracted
-`chrome-mv3` directory in Chrome and use only the hosted fixture index above:
+After packaging `originlens-release-candidate.zip`, load its extracted
+`chrome-mv3` directory in Chrome and use the loopback fixture index above:
 
 1. Before consent, **Claimed bank identity on a mismatched domain** must not be
    analyzed or warn. Popup must show **Protection is off** without the current
@@ -99,9 +95,8 @@ After deploying `originlens-release-candidate.zip`, load its extracted
    checks.
 2. **Claimed bank identity on a mismatched domain** must display the modal
    **Possible phishing page** before manual field entry. It must name Swedbank
-   Latvia, show the actual registrable domain `example.invalid`, state that
-   sensitive data is requested, focus **Leave this page**, and show a red `!`
-   badge.
+   Latvia, show the actual host `127.0.0.1`, state that sensitive data is
+   requested, focus **Leave this page**, and show a red `!` badge.
 3. Tab and Shift+Tab must remain within the warning actions. Choosing **Continue
    anyway** must dismiss the dialog for that navigation while Popup and
    Diagnostics still show `Danger` and a bypassed intervention. Reloading must
@@ -125,17 +120,11 @@ After deploying `originlens-release-candidate.zip`, load its extracted
    [IDENTITY_RESOLVER.md](IDENTITY_RESOLVER.md); disabling or disconnecting it
    must leave local analysis functional.
 
-Use that hosted address in stage-end acceptance instructions. Manual checks do
-not require form submission; synthetic credential controls are non-submitting,
-and Nginx accepts only GET and HEAD under `/fixtures/`. Deploy the current
-fixture set with `pnpm deploy:test-download` before requesting manual
-acceptance.
-
-`pnpm test:fixtures` is an optional developer fallback. It starts a
-loopback-only server at `http://127.0.0.1:4173/`, where its POST route consumes
-and discards request bodies without logging them. Automated Playwright tests use
-their own isolated loopback servers. None of these servers is a product backend,
-and localhost is not the canonical manual acceptance address.
+Manual checks do not require form submission. Synthetic credential controls are
+non-submitting. The loopback server consumes and discards POST request bodies
+without logging them. Automated Playwright tests use their own isolated loopback
+servers. None of these servers is a product backend. Private fixture hostnames
+and endpoints must not be recorded in repository or Store metadata.
 
 Live-bank tests require `RUN_LIVE_BANK_TESTS=1`, conservative navigation, no
 form interaction, sanitized output, and documented skips when automation is

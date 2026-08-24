@@ -12,7 +12,6 @@
   "scripts": {
     "build": "wxt build --mv3",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build",
-    "deploy:test-download": "bash scripts/deploy-test-download.sh",
     "dev": "wxt --mv3",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

@@ -100,30 +100,16 @@ Load `.output/chrome-mv3` as an unpacked extension in Chrome.
 
 ### Manual Chrome acceptance
 
-Use the canonical hosted fixture index:
-
-`https://fixtures.example.invalid/fixtures/`
-
-Stage acceptance instructions should link to that address directly. The hosted
-fixtures use fictional data, require no form submission during acceptance, and
-require no local fixture server.
-
-### Test-download deployment
-
-For the self-hosted test artifact, run:
+Start the loopback-only fixture server:
 
 ```bash
-pnpm deploy:test-download
+pnpm test:fixtures
 ```
 
-This creates an integrity-checkable ZIP and serves it only at
-`https://fixtures.example.invalid/originlens-release-candidate.zip`. Chrome does
-not install self-hosted extension ZIPs directly: extract the archive, then
-select its `chrome-mv3` directory with **Load unpacked** in
-`chrome://extensions`.
-
-The deployment command requires local `sudo` because it installs an Nginx vhost
-and reloads the server. See [deployment notes](docs/DEPLOYMENT.md).
+Open `http://127.0.0.1:4173/` in the same Chrome profile as the unpacked
+extension. The fixtures use fictional data and require no form submission.
+Private fixture hostnames and endpoints are intentionally not recorded in this
+repository or supplied to Chrome Web Store reviewers.
 
 Run the automated checks:
 
@@ -151,15 +137,6 @@ The nondestructive live-bank regression is separately opt-in:
 ```bash
 RUN_LIVE_BANK_TESTS=1 pnpm test:banks:live
 ```
-
-For local fixture development only, run:
-
-```bash
-pnpm test:fixtures
-```
-
-This optional fallback serves the same files at `http://127.0.0.1:4173/`; it is
-not the canonical manual acceptance address.
 
 The Playwright smoke test requires its bundled Chromium:
 

@@ -83,6 +83,35 @@ for (const obsolete of [
 if (!contents.submission.includes("Publishing: deferred after review"))
   throw new Error("Submission worksheet must require deferred publishing");
 
+const reviewerSection = contents.submission
+  .split("## Reviewer instructions")[1]
+  ?.split("## External-state record")[0];
+if (!reviewerSection)
+  throw new Error("Submission worksheet is missing reviewer instructions");
+if (/https?:\/\//iu.test(reviewerSection))
+  throw new Error(
+    "Store reviewer instructions must not depend on an external URL"
+  );
+for (const field of [
+  "Credentials — username: leave blank",
+  "Credentials — password: leave blank"
+])
+  if (!reviewerSection.includes(field))
+    throw new Error(`Submission worksheet is missing: ${field}`);
+
+const additionalInstructions = reviewerSection
+  .split("Additional instructions (maximum 500 characters; paste exactly):")[1]
+  ?.split("Reviewer instructions must remain self-contained")[0]
+  ?.replace(/\s*>\s*/gu, " ")
+  .replace(/\s+/gu, " ")
+  .trim();
+if (!additionalInstructions)
+  throw new Error("Submission worksheet is missing additional instructions");
+if (additionalInstructions.length > 500)
+  throw new Error(
+    `Store additional instructions exceed 500 characters: ${additionalInstructions.length}`
+  );
+
 const consentRequirements = {
   listing:
     "does not analyze website content, web history, or user activity until",

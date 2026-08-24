@@ -1136,7 +1136,7 @@ test("falls back to the local warning when the optional resolver is offline", as
   await extensionPage.close();
 });
 
-test("loads every hosted fixture without page errors", async () => {
+test("loads every synthetic fixture without page errors", async () => {
   test.setTimeout(90_000);
   const errors: string[] = [];
 

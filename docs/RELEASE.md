@@ -43,9 +43,9 @@ Release operators may set an explicit `SOURCE_DATE_EPOCH`.
 
 1. Review the exact commit, clean worktree, full gate output, SBOM, audit, and
    reproducibility hash.
-2. Deploy the test artifact and fixtures; verify the published checksum.
-3. Complete manual stable-Chrome acceptance at
-   `https://fixtures.example.invalid/fixtures/`.
+2. Package the test artifact and verify its checksum.
+3. Run `pnpm test:fixtures` and complete manual stable-Chrome acceptance at the
+   loopback-only index `http://127.0.0.1:4173/`.
 4. Only after explicit acceptance, create the annotated `stage-10` and `v0.1.2`
    tags and push the commit/tags.
 5. Obtain separate approval before creating/uploading a dashboard item and again

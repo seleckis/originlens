@@ -57,24 +57,20 @@ requires the approval recorded in the release workflow.
 
 ## Reviewer instructions
 
-No account, credentials, purchase, or form submission is needed.
+- Credentials — username: leave blank
+- Credentials — password: leave blank
+- Additional instructions (maximum 500 characters; paste exactly):
 
-1. Install the extension and leave the optional resolver disabled. Confirm the
-   first-run disclosure states **Website content**, **Web history**, and **User
-   activity**, and that analysis remains off until the consent checkbox and
-   **Enable OriginLens protection** are selected.
-2. Before enabling, open
-   https://fixtures.example.invalid/fixtures/identity-mismatch.html and confirm it
-   does not warn. Enable protection and confirm the already-open page displays
-   **Possible phishing page** before field entry.
-3. Disable protection in Options; confirm the warning disappears and Popup says
-   **Protection is off**. Re-enable protection for the remaining steps.
-4. Open `harmful-delayed-login.html`; it starts without a warning and warns when
-   the synthetic login form appears.
-5. Open `harmful-click-login.html`; it warns only after **Continue to login**.
-6. Open `unknown-brand-login.html` and `shared-hosting-login.html`; neither may
-   show an interrupting warning.
-7. Use only the inert synthetic controls. Do not enter or submit credentials.
+> No account or credentials are required. Install OriginLens and review the
+> first-run Website content, Web history, and User activity disclosure. Select
+> the consent checkbox and choose Enable OriginLens protection, then inspect the
+> popup and Options controls. Analysis runs locally on eligible HTTP/HTTPS
+> pages; the optional resolver is disabled by default. OriginLens never reads
+> field values. Do not enter real credentials or submit forms. No private test
+> service is required.
+
+Reviewer instructions must remain self-contained and must not name or depend on
+any private fixture host or internal network service.
 
 ## External-state record
 

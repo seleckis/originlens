@@ -30,9 +30,9 @@ Every stage must keep a Chrome-loadable production build. At its end: run lint,
 format checks, strict type checking, unit/integration tests, relevant Playwright
 tests, and the production build; provide exact Chrome acceptance steps; wait for
 manual confirmation; then commit, push, and create `stage-N` tag before the next
-stage begins. Manual Chrome acceptance uses the canonical hosted fixture index
-at `https://fixtures.example.invalid/fixtures/`. The loopback fixture server is an
-optional developer fallback, not the acceptance URL presented to the user.
+stage begins. Manual Chrome acceptance uses the loopback-only fixture index
+started by `pnpm test:fixtures` at `http://127.0.0.1:4173/`. Private fixture
+hostnames and endpoints are never committed or included in Store metadata.
 
 ## Stages
 
