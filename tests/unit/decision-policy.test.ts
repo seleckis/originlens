@@ -13,7 +13,10 @@ import {
   combineFrameStructuralSummaries
 } from "../../lib/dom-analysis";
 import { analyzeUrl } from "../../lib/url-analysis";
-import { mismatchedBankLoginFixture } from "../fixtures/identity-fixtures";
+import {
+  federatedBankLoginFixture,
+  mismatchedBankLoginFixture
+} from "../fixtures/identity-fixtures";
 
 function decisionFor(url: string, body: string, title: string) {
   document.body.innerHTML = body;
@@ -71,6 +74,45 @@ describe("explicit decision policy", () => {
       verifiedDomainMismatch: false
     });
     expect(result.intervention).toBe("not-required");
+  });
+
+  it("does not treat an isolated bank authentication option as the page identity", () => {
+    const result = decisionFor(
+      federatedBankLoginFixture.url,
+      federatedBankLoginFixture.body,
+      federatedBankLoginFixture.title
+    );
+    expect(result.state).toBe("no-strong-indicators");
+    expect(result.gates).toMatchObject({
+      strongIdentityClaim: false,
+      sensitiveDataIntent: true,
+      verifiedDomainMismatch: false
+    });
+    expect(result.intervention).toBe("not-required");
+  });
+
+  it("keeps a bank image inside the credential form as identity evidence", () => {
+    const result = decisionFor(
+      "https://login.example.test/",
+      `<main>
+        <h1>Sign in</h1>
+        <form>
+          <button type="submit"><img alt="Swedbank"></button>
+          <input type="password">
+        </form>
+      </main>`,
+      "Account login"
+    );
+    expect(result).toMatchObject({
+      state: "danger",
+      gates: {
+        strongIdentityClaim: true,
+        sensitiveDataIntent: true,
+        verifiedDomainMismatch: true
+      },
+      intervention: "required",
+      organization: "Swedbank Latvia"
+    });
   });
 
   it("keeps a strong mismatch without sensitive intent at caution", () => {

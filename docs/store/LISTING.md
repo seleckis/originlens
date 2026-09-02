@@ -1,6 +1,6 @@
-# Chrome Web Store listing — OriginLens v0.1.2
+# Chrome Web Store listing — OriginLens v0.1.3
 
-Status: publication-ready copy for the verified v0.1.2 upload. Copy changes
+Status: publication-ready copy for the verified v0.1.3 upload. Copy changes
 require review against the shipped behavior before submission.
 
 ## Name
@@ -60,6 +60,6 @@ hardware security keys.
 - Homepage: https://github.com/seleckis/originlens
 - Support: https://github.com/seleckis/originlens/issues
 - Privacy policy: https://github.com/seleckis/originlens/blob/main/PRIVACY.md
-- Official verified publisher URL: none for v0.1.2
+- Official verified publisher URL: none for v0.1.3
 - Promotional video: none
 - Marquee promotional tile: none

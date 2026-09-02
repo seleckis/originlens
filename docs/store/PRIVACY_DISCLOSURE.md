@@ -1,6 +1,6 @@
-# Chrome Web Store privacy disclosures — OriginLens v0.1.2
+# Chrome Web Store privacy disclosures — OriginLens v0.1.3
 
-Status: publication-ready answers for the exact verified v0.1.2 package. Recheck
+Status: publication-ready answers for the exact verified v0.1.3 package. Recheck
 the current dashboard wording immediately before submission.
 
 ## Single purpose
@@ -11,8 +11,8 @@ organization but is served from a domain not verified for that organization.
 ## Permission justification
 
 Copy these answers into the matching fields. Do not add an `activeTab`
-justification: v0.1.2 removes that redundant permission because broad HTTP(S)
-host access already grants the required current-tab access.
+justification: v0.1.3 omits that redundant permission because broad HTTP(S) host
+access already grants the required current-tab access.
 
 - **scripting justification:** Runs the bundled, value-blind structural analyzer
   on an eligible current page, including a page opened before extension

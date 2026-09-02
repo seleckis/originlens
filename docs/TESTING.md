@@ -55,7 +55,7 @@ flow and the SBOM.
 
 ## Chrome Web Store artifact
 
-`pnpm package:web-store` creates `dist/originlens-0.1.2-chrome-web-store.zip`,
+`pnpm package:web-store` creates `dist/originlens-0.1.3-chrome-web-store.zip`,
 its SHA-256 companion, and an adjacent CycloneDX SBOM. Unlike the test ZIP, the
 upload ZIP has `manifest.json` at its root and contains only production
 extension files.

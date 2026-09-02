@@ -84,3 +84,25 @@ export const mismatchedBankLoginFixture: IdentityDocumentFixture = {
   body: '<header>Swedbank</header><main><h1>Sign in to Swedbank</h1><form><label>User <input autocomplete="username"></label><label>Password <input type="password" value="fake-secret-never-read"></label><button type="button">Sign in</button></form></main>',
   url: "https://login.example.test/"
 };
+
+export const federatedBankLoginFixture: IdentityDocumentFixture = {
+  name: "synthetic federated bank login chooser",
+  title: "Example health portal",
+  body: `
+    <main>
+      <h1>Sign in</h1>
+      <form>
+        <nav aria-label="Federated authentication methods">
+          <a href="/authenticate/bank" title="Swedbank">
+            <img alt="Swedbank">
+          </a>
+          <a href="/authenticate/eid" title="eID">Use eID</a>
+        </nav>
+        <label>Email <input type="email" autocomplete="username"></label>
+        <label>Password <input type="password"></label>
+        <button type="submit">Sign in</button>
+      </form>
+    </main>
+  `,
+  url: "https://health-portal.example.test/login"
+};

@@ -4,7 +4,7 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 artifact_dir="$repo_root/dist"
-artifact_name="originlens-0.1.2-chrome-web-store.zip"
+artifact_name="originlens-0.1.3-chrome-web-store.zip"
 artifact_path="$artifact_dir/$artifact_name"
 checksum_path="$artifact_path.sha256"
 source_epoch="${SOURCE_DATE_EPOCH:-1704067200}"

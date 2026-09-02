@@ -1,6 +1,6 @@
 # Claimed identity and positive references
 
-- Review date: 2026-08-22
+- Review date: 2026-08-28
 - Scope: Stage 3 deterministic identity extraction and Latvian bank registry
 
 ## Primary research
@@ -20,6 +20,16 @@
   dates, and an `unknown`/not-applicable outcome for identities outside its
   local registry. It does not perform popularity lookup, search, dynamic
   expansion, or remote interaction.
+- The [WHATWG HTML Standard](https://html.spec.whatwg.org/dev/images.html#alt)
+  requires an image that is the content of a link or button to use alternative
+  text that conveys the purpose of that control. The
+  [W3C functional-images guidance](https://www.w3.org/WAI/tutorials/images/functional/)
+  likewise distinguishes images that initiate actions from images that convey
+  page information. OriginLens therefore does not interpret the accessible label
+  of a linked or button-contained authentication option as an assertion that the
+  surrounding page belongs to that provider. An image inside the form control
+  that actually submits password or OTP input remains eligible identity
+  evidence; merely sharing a form ancestor is insufficient.
 
 These systems report experimental results for their own datasets and threat
 models. OriginLens does not reuse their accuracy claims.
@@ -60,5 +70,10 @@ are based on the authoritative pages themselves and retain their source URLs.
   contexts remain weak.
 - Context labels cannot suppress a page that requests password or OTP input,
   because attackers control page text and structure.
+- A functional image inside a link, non-submit button, or button-role control
+  labels an action or destination, not the surrounding page. It is excluded from
+  accessible-image identity signals even if a framework wraps that control and
+  password fields in one form. Independent title, heading, metadata, branding,
+  legal, and credential-form signals remain available.
 - Stage 3 reports verified relationships and strong mismatches as inspectable
   facts. Warning and blocking policy remains Stage 4 work.

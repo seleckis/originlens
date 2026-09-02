@@ -708,6 +708,33 @@ test("does not warn for verified-bank or unknown-brand sensitive forms", async (
   await extensionPage.close();
 });
 
+test("does not treat a federated bank option as the page identity", async () => {
+  const worker = await extensionWorker();
+  const extensionId = new URL(worker.url()).host;
+  const extensionPage = await context.newPage();
+  await extensionPage.goto(`chrome-extension://${extensionId}/options.html`);
+  const inspected = await context.newPage();
+  await inspected.goto(
+    "http://fixture.example.test:4174/federated-bank-login.html"
+  );
+  const tabId = await tabIdFor(worker, "http://fixture.example.test:4174/*");
+
+  await expect
+    .poll(() => storedDecisionSummary(extensionPage, tabId))
+    .toMatchObject({
+      intervention: "not-required",
+      gates: {
+        strongIdentityClaim: false,
+        sensitiveDataIntent: true,
+        verifiedDomainMismatch: false
+      }
+    });
+  await expect(inspected.getByRole("alertdialog")).toHaveCount(0);
+
+  await inspected.close();
+  await extensionPage.close();
+});
+
 test("verifies a synthetic page on a provenance-backed domain", async () => {
   const worker = await extensionWorker();
   const extensionId = new URL(worker.url()).host;
@@ -1166,7 +1193,7 @@ test("loads the release candidate without implicit remote requests or safety cla
       })
     | undefined;
   expect(manifest.manifest_version).toBe(3);
-  expect(manifest.version).toBe("0.1.2");
+  expect(manifest.version).toBe("0.1.3");
   expect(manifest.description).toBe(
     "Local-first phishing warnings using claimed identity, sensitive-data intent, verified domains, and bounded page behavior."
   );

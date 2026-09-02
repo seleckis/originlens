@@ -1,4 +1,4 @@
-# Chrome Web Store submission worksheet — OriginLens v0.1.2
+# Chrome Web Store submission worksheet — OriginLens v0.1.3
 
 This is the authoritative dashboard worksheet for the first publication. It does
 not authorize uploading, submitting, or publishing. Each external action
@@ -16,10 +16,10 @@ requires the approval recorded in the release workflow.
 
 ## Package
 
-- Upload: `dist/originlens-0.1.2-chrome-web-store.zip`
-- Checksum: `dist/originlens-0.1.2-chrome-web-store.zip.sha256`
+- Upload: `dist/originlens-0.1.3-chrome-web-store.zip`
+- Checksum: `dist/originlens-0.1.3-chrome-web-store.zip.sha256`
 - SBOM, kept outside the upload: `dist/SBOM.cdx.json`
-- Expected manifest: Manifest V3, version 0.1.2
+- Expected manifest: Manifest V3, version 0.1.3
 - Upload only bytes that passed all automated and manual gates
 
 ## Store listing

@@ -27,8 +27,8 @@ pnpm verify:reproducible
 
 `pnpm package:web-store` produces the separate upload artifact:
 
-- `dist/originlens-0.1.2-chrome-web-store.zip`
-- `dist/originlens-0.1.2-chrome-web-store.zip.sha256`
+- `dist/originlens-0.1.3-chrome-web-store.zip`
+- `dist/originlens-0.1.3-chrome-web-store.zip.sha256`
 
 The test ZIP intentionally contains a `chrome-mv3` directory plus its SBOM for
 the **Load unpacked** workflow. The Web Store ZIP contains `manifest.json` at
@@ -46,8 +46,10 @@ Release operators may set an explicit `SOURCE_DATE_EPOCH`.
 2. Package the test artifact and verify its checksum.
 3. Run `pnpm test:fixtures` and complete manual stable-Chrome acceptance at the
    loopback-only index `http://127.0.0.1:4173/`.
-4. Only after explicit acceptance, create the annotated `stage-10` and `v0.1.2`
-   tags and push the commit/tags.
+4. Only after explicit acceptance, create the applicable annotated roadmap-stage
+   tag, when a stage closes, and the release-version tag; then push the
+   checkpoint and tags. The current accepted patch release uses `v0.1.3`; its
+   last roadmap-stage tag remains the historical `stage-10` checkpoint.
 5. Obtain separate approval before creating/uploading a dashboard item and again
    before selecting **Submit for review**.
 6. Use deferred publishing. After approval, verify the staged metadata and

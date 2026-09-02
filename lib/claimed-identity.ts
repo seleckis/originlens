@@ -154,6 +154,21 @@ function boundedDocumentTitle(document: Document): string {
   return title ? boundedNodeText(title) : "";
 }
 
+function isAuthenticationOptionImage(element: Element): boolean {
+  if (element.closest("a[href]")) return true;
+  const control = element.closest('button, [role="button"]');
+  if (!control) return false;
+  if (!(control instanceof HTMLButtonElement) || control.type !== "submit")
+    return true;
+  const form = control.form;
+  return (
+    !form ||
+    form.querySelector(
+      'input[type="password"], input[autocomplete="one-time-code"]'
+    ) === null
+  );
+}
+
 function boundedElements(
   document: Document,
   selector: string,
@@ -262,11 +277,14 @@ function collectSignals(document: Document): {
     'img[alt], img[aria-label], img[title], [role="img"]',
     16,
     "IDENTITY.SOURCE.ACCESSIBLE_IMAGE",
-    (element) => [
-      boundedAttribute(element, "alt"),
-      boundedAttribute(element, "aria-label"),
-      boundedAttribute(element, "title")
-    ]
+    (element) =>
+      isAuthenticationOptionImage(element)
+        ? []
+        : [
+            boundedAttribute(element, "alt"),
+            boundedAttribute(element, "aria-label"),
+            boundedAttribute(element, "title")
+          ]
   );
   addElements(
     'header, [role="banner"], [class*="brand" i], [class*="logo" i]',
