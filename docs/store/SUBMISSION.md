@@ -95,14 +95,14 @@ any private fixture host or internal network service.
 - Published baseline verified through API V2 at `2026-09-03T14:42:05+03:00`:
   version `0.1.2`, state `PUBLISHED`, deployment `100%`
 - Dashboard item ID: `daocfajhjghkempepndgncijepjabbkp`
-- Candidate commit: pending completed verification and acceptance
-- Release tag: `v0.1.4` pending completed verification and acceptance
+- Candidate commit: `d018d13ae94df5b6e2db9b4896f507c2f98d5038`
+- Release tag: `v0.1.4`
 - Upload SHA-256:
   `70f9354ce1527f1ce8c3dfedc81759eb5495a416c3108f8f6c2506f5118e5fd7`
-- Upload: pending final live-release confirmation
-- Submit for review: pending final live-release confirmation; release mode
-  `DEFAULT_PUBLISH`
-- Review outcome: pending
+- Upload: API V2 processing succeeded at `2026-09-03T12:04:37.229Z`
+- Submit for review: API V2 accepted `DEFAULT_PUBLISH`; independently verified
+  at `2026-09-03T15:05:10+03:00`
+- Review outcome: `PENDING_REVIEW`, version `0.1.4`, deployment `100%`
 - Publication: automatic only after Google approval
 - Signed-store installation result: pending publication
 
