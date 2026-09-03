@@ -1193,7 +1193,7 @@ test("loads the release candidate without implicit remote requests or safety cla
       })
     | undefined;
   expect(manifest.manifest_version).toBe(3);
-  expect(manifest.version).toBe("0.1.3");
+  expect(manifest.version).toBe("0.1.4");
   expect(manifest.description).toBe(
     "Local-first phishing warnings using claimed identity, sensitive-data intent, verified domains, and bounded page behavior."
   );

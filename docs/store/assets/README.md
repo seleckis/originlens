@@ -5,7 +5,7 @@ The canonical brand mark and promotional tile sources are committed under
 created with `pnpm store:assets` using the bundled Playwright Chromium version.
 
 The screenshots show the actual v0.1.2 extension running against synthetic,
-credential-free fixtures. They remain representative of v0.1.3 because the
+credential-free fixtures. They remain representative of v0.1.4 because the
 interface and brand assets are unchanged. They must be regenerated and reviewed
 whenever those surfaces change. Do not add third-party logos, real credentials,
 personal data, or claims that OriginLens proves a site is safe.

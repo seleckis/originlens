@@ -3,7 +3,10 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import process from "node:process";
 
-const EXPECTED_VERSION = "0.1.3";
+const packageManifest = JSON.parse(
+  readFileSync(resolve(import.meta.dirname, "../package.json"), "utf8")
+);
+const EXPECTED_VERSION = packageManifest.version;
 const EXPECTED_PERMISSIONS = ["scripting", "storage", "webNavigation"];
 const EXPECTED_HOST_PERMISSIONS = ["http://*/*", "https://*/*"];
 const EXPECTED_DESCRIPTION =
@@ -37,7 +40,9 @@ function pngDimensions(bytes, entry) {
 }
 
 const input = process.argv[2];
-const artifact = resolve(input ?? "dist/originlens-0.1.3-chrome-web-store.zip");
+const artifact = resolve(
+  input ?? `dist/originlens-${EXPECTED_VERSION}-chrome-web-store.zip`
+);
 if (!existsSync(artifact)) fail(`artifact not found: ${artifact}`);
 
 const entries = execFileSync("unzip", ["-Z1", artifact], {

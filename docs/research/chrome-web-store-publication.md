@@ -1,6 +1,6 @@
 # Chrome Web Store publication requirements
 
-Reviewed: 2026-08-24
+Reviewed: 2026-09-03
 
 ## Primary sources
 
@@ -16,6 +16,14 @@ Reviewed: 2026-08-24
 - [Distribution settings](https://developer.chrome.com/docs/webstore/cws-dashboard-distribution)
 - [First publication workflow](https://developer.chrome.com/docs/webstore/publish)
 - [Review process](https://developer.chrome.com/docs/webstore/review-process)
+- [Chrome Web Store API V2](https://developer.chrome.com/docs/webstore/api)
+- [Use the Chrome Web Store API](https://developer.chrome.com/docs/webstore/using-api)
+- [Service-account authentication](https://developer.chrome.com/docs/webstore/service-accounts)
+- [Fetch item status](https://developer.chrome.com/docs/webstore/api/reference/rest/v2/publishers.items/fetchStatus)
+- [Upload a package](https://developer.chrome.com/docs/webstore/api/reference/rest/v2/media/upload)
+- [Submit or publish](https://developer.chrome.com/docs/webstore/api/reference/rest/v2/publishers.items/publish)
+- [Item states](https://developer.chrome.com/docs/webstore/api/reference/rest/v2/ItemState)
+- [Upload states](https://developer.chrome.com/docs/webstore/api/reference/rest/v2/UploadState)
 
 ## Findings applied to OriginLens
 
@@ -49,6 +57,21 @@ Reviewed: 2026-08-24
   cannot provide proactive warnings on arbitrary phishing origins.
 - A public item can use deferred publishing after review. Upload, submission,
   and the final publish action remain separate OriginLens approval gates.
+- API V2 service accounts can be registered under the publisher account. Using
+  `gcloud` impersonation provides short-lived access without a JSON key.
+- Package upload is a separate media endpoint and does not submit a revision. An
+  asynchronous upload is polled through `fetchStatus`; its terminal states are
+  `SUCCEEDED` and `FAILED`.
+- `fetchStatus` returns separate published and submitted revision objects. A
+  submitted `STAGED` revision is approved and awaits developer publication;
+  `PENDING_REVIEW` remains asynchronous, and `REJECTED` requires dashboard
+  remediation.
+- The `publish` endpoint is also the review-submission endpoint. Its body must
+  explicitly select `STAGED_PUBLISH` to wait after approval or `DEFAULT_PUBLISH`
+  to publish automatically after approval. OriginLens blocks Store warnings and
+  never infers this choice.
+- API V2 has no Store listing or privacy-metadata update method. Those fields
+  remain a dashboard prerequisite.
 
 These are publication requirements, not authorization to interact with the
 Chrome Web Store dashboard.

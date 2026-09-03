@@ -80,8 +80,15 @@ for (const obsolete of [
   if (existsSync(resolve(repoRoot, obsolete)))
     throw new Error(`Obsolete draft remains: ${obsolete}`);
 
-if (!contents.submission.includes("Publishing: deferred after review"))
-  throw new Error("Submission worksheet must require deferred publishing");
+for (const phrase of [
+  "Release mode: `DEFAULT_PUBLISH`",
+  "Alternate staged mode: `STAGED_PUBLISH`",
+  "explicit confirmation"
+])
+  if (!contents.submission.includes(phrase))
+    throw new Error(
+      `Submission worksheet is missing release-mode gate: ${phrase}`
+    );
 
 const reviewerSection = contents.submission
   .split("## Reviewer instructions")[1]

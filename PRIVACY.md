@@ -2,7 +2,7 @@
 
 Effective: 2026-08-24
 
-Applies to: OriginLens v0.1.3
+Applies to: OriginLens v0.1.4
 
 OriginLens is a local-first phishing-analysis browser extension. This policy
 explains the information the extension handles, how it is used, and what never

@@ -6,7 +6,7 @@ OriginLens is an open-source, privacy-first Chrome extension being built to
 detect phishing from identity claims, sensitive-data intent, verified domain
 relationships, and page behavior—not malicious-URL blocklists.
 
-## Current status: v0.1.3 false-positive-corrected Web Store candidate
+## Current status: v0.1.4 keyless Web Store release candidate
 
 The current build is a loadable Manifest V3 extension with early local signals.
 It provides:
@@ -129,10 +129,13 @@ pnpm store:validate
 pnpm verify:reproducible
 ```
 
-`pnpm package:web-store` creates `dist/originlens-0.1.3-chrome-web-store.zip`.
-This is distinct from the nested test-download ZIP and is never uploaded
-automatically. Store listing copy, privacy declarations, assets, permission
-justifications, and reviewer steps are recorded in [docs/store/](docs/store/).
+`pnpm store:package` creates and fully validates
+`dist/originlens-0.1.4-chrome-web-store.zip`. `pnpm store:status` checks the
+live Store state using keyless service-account impersonation. Draft upload,
+staged submission, staged publication, and automatic release remain distinct,
+explicitly confirmed commands documented in [docs/RELEASE.md](docs/RELEASE.md).
+Store listing copy, privacy declarations, assets, permission justifications, and
+reviewer steps are recorded in [docs/store/](docs/store/).
 
 The nondestructive live-bank regression is separately opt-in:
 

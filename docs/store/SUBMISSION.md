@@ -1,6 +1,6 @@
-# Chrome Web Store submission worksheet — OriginLens v0.1.3
+# Chrome Web Store submission worksheet — OriginLens v0.1.4
 
-This is the authoritative dashboard worksheet for the first publication. It does
+This is the authoritative dashboard worksheet for this Store release. It does
 not authorize uploading, submitting, or publishing. Each external action
 requires the approval recorded in the release workflow.
 
@@ -16,10 +16,10 @@ requires the approval recorded in the release workflow.
 
 ## Package
 
-- Upload: `dist/originlens-0.1.3-chrome-web-store.zip`
-- Checksum: `dist/originlens-0.1.3-chrome-web-store.zip.sha256`
+- Upload: `dist/originlens-0.1.4-chrome-web-store.zip`
+- Checksum: `dist/originlens-0.1.4-chrome-web-store.zip.sha256`
 - SBOM, kept outside the upload: `dist/SBOM.cdx.json`
-- Expected manifest: Manifest V3, version 0.1.3
+- Expected manifest: Manifest V3, version 0.1.4
 - Upload only bytes that passed all automated and manual gates
 
 ## Store listing
@@ -51,9 +51,12 @@ requires the approval recorded in the release workflow.
 - Payment: free; no in-extension purchases
 - Visibility: public
 - Regions: all regions
-- Publishing: deferred after review
-- A separate explicit approval is required both before **Submit for review** and
-  before the final **Publish** action.
+- Release mode: `DEFAULT_PUBLISH` through `pnpm store:release`; publish
+  automatically only after Google approval
+- Alternate staged mode: `STAGED_PUBLISH` through `pnpm store:submit`, followed
+  after approval by separately confirmed `pnpm store:publish`
+- The selected command and version require an exact explicit confirmation. The
+  CLI never infers or silently changes the release mode.
 
 ## Reviewer instructions
 
@@ -74,7 +77,36 @@ any private fixture host or internal network service.
 
 ## External-state record
 
-Before submission, append the candidate commit, tag, upload SHA-256, dashboard
-item ID, and submission time. After review, append the review outcome. After an
-approved publication, append the listing URL, publication time, and signed-store
-installation result. Never reuse a version number for different bytes.
+### Existing v0.1.3 draft
+
+- Candidate commit: `aa000454010d99820c38fb679843086d9fed5bdb`
+- Release tag: `v0.1.3`
+- Uploaded package SHA-256:
+  `ecaa774f7ee80e69ac09526193884baa8cef213fb06b3e51c47fd6e35e5cc41c`
+- Dashboard item ID: `daocfajhjghkempepndgncijepjabbkp`
+- Dashboard upload recorded: `2026-09-03T12:12:55+03:00`
+- Dashboard status: saved as draft; upload reported by the release operator;
+  superseded as the release candidate by v0.1.4 and must not be submitted
+- Submit for review: not submitted
+- Publication: not published
+
+### v0.1.4 automatic release candidate
+
+- Published baseline verified through API V2 at `2026-09-03T14:42:05+03:00`:
+  version `0.1.2`, state `PUBLISHED`, deployment `100%`
+- Dashboard item ID: `daocfajhjghkempepndgncijepjabbkp`
+- Candidate commit: pending completed verification and acceptance
+- Release tag: `v0.1.4` pending completed verification and acceptance
+- Upload SHA-256:
+  `70f9354ce1527f1ce8c3dfedc81759eb5495a416c3108f8f6c2506f5118e5fd7`
+- Upload: pending final live-release confirmation
+- Submit for review: pending final live-release confirmation; release mode
+  `DEFAULT_PUBLISH`
+- Review outcome: pending
+- Publication: automatic only after Google approval
+- Signed-store installation result: pending publication
+
+After the confirmed release operation, append its time, checksum, and submitted
+state. After publication, append the listing URL, publication time, and
+signed-store installation result. Never reuse a version number for different
+bytes.
